@@ -1,0 +1,12 @@
+goal:
+  x: 20.0
+  y: 0.0
+planner:
+  w_goal: 1.2
+  w_clear: 0.6
+  w_turn: 0.25
+  fov_deg: 180
+  step_deg: 5
+  min_clear: 0.6
+  steer_limit_deg: 30
+  base_speed: 0.35

@@ -1,0 +1,18 @@
+serial:
+  port: "/dev/ttyUSB0"
+  baudrate: 115200
+
+lidar:
+  port: "/dev/ttyUSB1"
+
+odom:
+  kv: 1.00
+  kw: 1.00
+
+camera:
+  frame_w: 320
+  frame_h: 240
+  roi_y_ratio: 0.66
+
+safety:
+  estop_front_m: 0.35

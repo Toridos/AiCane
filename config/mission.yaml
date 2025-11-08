@@ -1,0 +1,9 @@
+- type: STRAIGHT
+  dist_m: 2.0
+  speed: 0.30
+- type: TURN
+  angle_deg: 90
+  ang_speed: 60
+- type: STRAIGHT
+  dist_m: 3.5
+  speed: 0.35
