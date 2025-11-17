@@ -31,6 +31,9 @@ class Config:
     FRONT_ULTRA_PORT = 2
     LEFT_ULTRA_PORT = 3
     RIGHT_ULTRA_PORT = 12
+    # RGB LED 포트 (디지털 RGB LED 모듈)
+    LED_PORT = 13   # LED가 연결된 포트 번호
+
     
     # 본체 크기
     ROBOT_WIDTH_CM = 25
@@ -127,6 +130,8 @@ class SensorManager:
             'left_near': left_ir,
             'right_near': right_ir,
         }
+    
+
 
 
 # ========== 모션 컨트롤 클래스 ==========
@@ -177,6 +182,71 @@ class MotionController:
         self.robot.set_mecanumwheels_rotate_right(Config.ROTATE_SPEED)
         time.sleep(duration)
         self.stop()
+
+# ====== LED Controller (디지털 RGB LED용) ======
+class LEDController:
+    def __init__(self, robot, port):
+        """
+        port: 디지털 RGB LED가 연결된 포트 번호
+        """
+        self.robot = robot
+        self.port = port
+        self._has_rgb = hasattr(robot, "set_rgb_led_color")
+
+    def _set_color(self, r, g, b):
+        """RGB 색상 설정 (0-100 범위)"""
+        if not self._has_rgb or self.port is None:
+            print(f"[LED] RGB({r},{g},{b})")
+            return
+        try:
+            self.robot.set_rgb_led_color(self.port, r, g, b)
+        except Exception as e:
+            print(f"[LED] 색상 설정 실패: {e}")
+
+    def off(self):
+        """LED 끄기"""
+        if self._has_rgb and self.port is not None:
+            try:
+                self.robot.set_rgb_led_off(self.port)
+            except:
+                self._set_color(0, 0, 0)
+        else:
+            print("[LED] OFF")
+
+    def on(self):
+        """LED 켜기"""
+        if self._has_rgb and self.port is not None:
+            try:
+                self.robot.set_rgb_led_on(self.port)
+            except:
+                pass
+        else:
+            print("[LED] ON")
+
+    def green(self, seconds=None):
+        """초록색 켜기"""
+        self._set_color(0, 100, 0)
+        self.on()
+        if seconds:
+            time.sleep(seconds)
+            self.off()
+
+    def orange_on(self):
+        """주황색 켜기 (빨강+초록)"""
+        self._set_color(100, 100, 0)
+        self.on()
+
+    def red_blink(self, seconds=1.0, hz=5):
+        """빨강 깜빡이기"""
+        period = 1.0 / float(hz)
+        t_end = time.time() + seconds
+        while time.time() < t_end:
+            self._set_color(100, 0, 0)
+            self.on()
+            time.sleep(period / 2)
+            self.off()
+            time.sleep(period / 2)
+
 
 
 # ========== 장애물 회피 클래스 ==========
@@ -431,10 +501,11 @@ def decide_direction_and_limit(lf, l, rf, r, clear_th=Config.SCAN_CLEAR_THRESHOL
 class Navigator:
     """목표 지점까지 주행 관리"""
     
-    def __init__(self, motion: MotionController, sensors: SensorManager, avoider: ObstacleAvoider):
+    def __init__(self, motion: MotionController, sensors: SensorManager, avoider: ObstacleAvoider, led: LEDController=None):
         self.motion = motion
         self.sensors = sensors
         self.avoider = avoider
+        self.led = led
     
     def _handle_side_correction(self, sensor_data):
         """측면 보정"""
@@ -467,7 +538,13 @@ class Navigator:
             if sensor_data['front_blocked']:
                 print("⚠️ 전방 장애물 감지!")
 
+                if self.led:
+                    # 빨강 1초 점멸
+                    self.led.red_blink(seconds=1.0, hz=5)
+                    # 회피 중 주황 고정
+                    self.led.orange_on()
                 success, extra_forward = self.avoider.try_avoid_obstacle()
+                if self.led: self.led.off()
                 if success:
                     # 🔥 회피 때문에 추가로 직진한 거리 반영
                     traveled_distance += extra_forward
@@ -490,6 +567,8 @@ class Navigator:
         print("\n" + "="*50)
         print("🎉 목표 도착!")
         print("="*50)
+        if self.led:
+            self.led.green(seconds=3.0)  # 초록 3초 on → 자동 off
         return True
 
 
@@ -500,11 +579,14 @@ class RobotSystem:
     def __init__(self):
         self.robot = RobokitRS.RobokitRS()
         self.robot.port_open(Config.PORT)
-        
+        self.led = LEDController(
+            self.robot,
+            port=Config.LED_PORT
+        )
         self.sensors = SensorManager(self.robot)
         self.motion = MotionController(self.robot)
         self.avoider = ObstacleAvoider(self.motion, self.sensors)
-        self.navigator = Navigator(self.motion, self.sensors, self.avoider)
+        self.navigator = Navigator(self.motion, self.sensors, self.avoider, self.led)
         
         self._print_startup_info()
     
