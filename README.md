@@ -48,7 +48,7 @@ Self-driving cane using AI
 
 ## 📎 Links
 [![Notion](https://img.shields.io/badge/Notion-%23000000.svg?style=for-the-badge&logo=notion&logoColor=white)](https://www.notion.so/Toridos-265f0c1d63f280a0a66cd0457f8280f7?source=copy_link)  
-[![Google Docs](https://img.shields.io/badge/Google%20Docs-4285F4?style=for-the-badge&logo=google&logoColor=white)]([https://docs.google.com/](https://docs.google.com/document/d/1n83K1bJrwUNRKtgSwDi9mfwyJ8olR3boG_1goroDKLg/edit?usp=sharing) <!-- 실제 Docs 링크로 교체하세요 -->
+[![Google Docs](https://img.shields.io/badge/Google%20Docs-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://docs.google.com/document/d/1n83K1bJrwUNRKtgSwDi9mfwyJ8olR3boG_1goroDKLg/edit?usp=sharing) <!-- 실제 Docs 링크로 교체하세요 -->
 
 ---
 
