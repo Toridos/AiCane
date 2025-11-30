@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>AiCane Indoor Route Planner</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 25px;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+        }
+
+        #viewer-area {
+            display: flex;
+            gap: 30px;
+            align-items: flex-start;
+        }
+
+        #floor-viewer {
+            text-align: center;
+        }
+
+        #floor-img {
+            width: 550px;
+            border: 1px solid #ccc;
+        }
+
+        .btn-nav {
+            padding: 8px 15px;
+            font-size: 16px;
+            margin: 10px;
+            cursor: pointer;
+        }
+
+        #overlay-area img {
+            width: 420px;
+            border: 1px solid #aaa;
+            margin-right: 10px;
+        }
+
+        .panel {
+            margin-top: 20px;
+        }
+
+        input {
+            font-size: 17px;
+            padding: 8px;
+            width: 220px;
+            margin: 5px 0;
+        }
+
+        button {
+            font-size: 17px;
+            padding: 10px;
+            width: 220px;
+            margin-top: 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+
+<h1>🏢 AiCane Indoor Route Planner</h1>
+
+<div id="viewer-area">
+
+    <!-- 층 미리보기 -->
+    <div id="floor-viewer">
+        <button class="btn-nav" id="btn-prev">⬅ 이전층</button>
+        <span id="floor-label" style="font-size:20px; margin: 0 15px;">1층</span>
+        <button class="btn-nav" id="btn-next">다음층 ➡</button>
+
+        <div style="margin-top:15px;">
+            <img id="floor-img" src="http://127.0.0.1:8000/static/s4-1_floor1.png">
+        </div>
+    </div>
+
+    <!-- 경로 오버레이 출력 영역 -->
+    <div>
+        <h3>경로 오버레이</h3>
+        <div id="overlay-area" style="display:flex;"></div>
+    </div>
+
+</div>
+
+<!-- 입력 패널 -->
+<div class="panel">
+    <h3>출발/도착 호수 입력</h3>
+
+    <input id="start-room" type="number" placeholder="출발 호수 (예: 104)">
+    <br>
+    <input id="goal-room" type="number" placeholder="도착 호수 (예: 307)">
+    <br>
+
+    <button id="btn-generate">경로 생성</button>
+</div>
+
+<script>
+/* ------------------------------------------------------------------
+   층 이미지 미리보기 (좌/우 슬라이드)
+------------------------------------------------------------------- */
+
+let currentFloor = 1;
+const maxFloor = 3;
+
+const floorImages = {
+    1: "static/s4-1_floor1.png",
+    2: "static/s4-1_floor2.png",
+    3: "static/s4-1_floor3.png"
+};
+
+function updateFloorImage() {
+    document.getElementById("floor-img").src = floorImages[currentFloor];
+    document.getElementById("floor-label").textContent = `${currentFloor}층`;
+}
+
+document.getElementById("btn-prev").onclick = () => {
+    if (currentFloor > 1) {
+        currentFloor--;
+        updateFloorImage();
+    }
+};
+
+document.getElementById("btn-next").onclick = () => {
+    if (currentFloor < maxFloor) {
+        currentFloor++;
+        updateFloorImage();
+    }
+};
+
+updateFloorImage();
+
+
+
+/* ------------------------------------------------------------------
+   FastAPI 경로 생성 요청
+------------------------------------------------------------------- */
+
+document.getElementById("btn-generate").onclick = async () => {
+    const startRoom = parseInt(document.getElementById("start-room").value);
+    const goalRoom = parseInt(document.getElementById("goal-room").value);
+
+    if (!startRoom || !goalRoom) {
+        alert("출발/도착 호수를 입력해 주세요.");
+        return;
+    }
+
+    const body = {
+        start_room: startRoom,
+        goal_room: goalRoom
+    };
+
+    try {
+        const res = await fetch("http://127.0.0.1:8000/api/generate-path", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify(body)
+        });
+
+        const data = await res.json();
+
+        if (!data.success) {
+            alert("경로를 찾을 수 없습니다.");
+            return;
+        }
+
+        console.log("서버 응답:", data);
+
+        // -------------------------------
+        // 오버레이 이미지 표시
+        // -------------------------------
+        const overlayDiv = document.getElementById("overlay-area");
+        overlayDiv.innerHTML = "";  // 초기화
+
+        data.overlay.forEach(url => {
+            const img = document.createElement("img");
+            img.src = "http://127.0.0.1:8000" + url; // FastAPI static URL
+            overlayDiv.appendChild(img);
+        });
+
+        alert("경로 생성 완료!");
+
+    } catch (err) {
+        alert("서버 요청 실패 — FastAPI가 켜져있는지 확인하세요.");
+        console.error(err);
+    }
+};
+</script>
+</body>
+</html>

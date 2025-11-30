@@ -1,0 +1,9 @@
+ultralytics>=8.0.0
+opencv-python-headless
+pillow
+numpy
+pymupdf
+pytesseract
+shapely
+networkx
+scikit-image
