@@ -31,6 +31,12 @@ body{font-family:Inter,system-ui,Arial,Helvetica,sans-serif;margin:0;background:
 .floor-card{background:var(--card);padding:16px;border-radius:12px;border:1px solid #eef2f7}
 .floor-controls{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
 .floor-visual{height:360px;display:flex;align-items:center;justify-content:center;border-radius:8px;background:#fff}
+.floor-visual img{max-width:100%;max-height:100%;height:auto;display:block}
+
+/* markers for click-to-select coordinates */
+.marker{position:absolute;width:14px;height:14px;border-radius:50%;transform:translate(-50%,-50%);box-shadow:0 0 0 3px rgba(0,0,0,0.08);pointer-events:none}
+.marker.start{background:#10b981;border:2px solid white}
+.marker.end{background:#ef4444;border:2px solid white}
 .placeholder{color:#9ca3af}
 .form-card{background:var(--card);padding:16px;border-radius:12px;border:1px solid #eef2f7;display:flex;flex-direction:column;gap:8px}
 .form-card input{padding:10px;border-radius:6px;border:1px solid #e6e7ea}

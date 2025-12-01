@@ -40,9 +40,9 @@ for f in [1,2,3]:
 
 
 FLOOR_IMG = {
-    1: "static/s4_1-1.png",
-    2: "static/s4_1-2.png",
-    3: "static/s4_1-3.png"
+    1: "static/s4_1_nor-1.png",
+    2: "static/s4_1_nor-2.png",
+    3: "static/s4_1_nor-3.png"
 }
 
 OVERLAY_DIR = Path("static/overlays")
@@ -144,3 +144,71 @@ def generate_path(req: Req):
     with open(outfile,"w") as f: json.dump(path,f,indent=2)
 
     return {"success":True,"path":path,"overlay":[img1,img2],"json_file":str(outfile)}
+
+
+@app.post("/api/generate-path-coords")
+def generate_path_coords(body: dict):
+    """Accepts JSON:
+    {"start": {"floor":1,"x":100,"y":150}, "goal": {"floor":3,"x":200,"y":300}}
+    Returns same structure as /api/generate-path
+    """
+    try:
+        start = body.get("start")
+        goal = body.get("goal")
+        sf = int(start.get("floor"))
+        gf = int(goal.get("floor"))
+        sx, sy = int(start.get("x")), int(start.get("y"))
+        gx, gy = int(goal.get("x")), int(goal.get("y"))
+    except Exception as e:
+        return {"success": False, "error": "invalid payload"}
+
+    # single floor
+    if sf == gf:
+        raw = bfs_single_floor(PRE[sf]["grid"], (sx, sy), (gx, gy))
+        if not raw:
+            return {"success": False}
+        path = [{"floor": sf, "x": x, "y": y} for x, y in raw]
+        img_url = draw_overlay(sf, raw)
+        outfile = OUTPUT_DIR / f"route_coords_{sf}_{time.time()}.json"
+        with open(outfile, "w") as f:
+            json.dump(path, f, indent=2)
+        return {"success": True, "path": path, "overlay": [img_url], "json_file": str(outfile)}
+
+    # multi-floor: pick same-stair matching similar to existing logic
+    start_stairs = PRE[sf]["stairs"]
+    goal_stairs = PRE[gf]["stairs"]
+
+    best = None
+    best_score = None
+    for s in start_stairs:
+        t = min(goal_stairs, key=lambda g: (g[0]-s[0])**2 + (g[1]-s[1])**2)
+        raw1_cand = bfs_single_floor(PRE[sf]["grid"], (sx, sy), s)
+        raw2_cand = bfs_single_floor(PRE[gf]["grid"], t, (gx, gy))
+        if raw1_cand and raw2_cand:
+            score = len(raw1_cand) + len(raw2_cand)
+            if best is None or score < best_score:
+                best = (s, t, raw1_cand, raw2_cand)
+                best_score = score
+
+    if best is not None:
+        stairs_start, stairs_goal, raw1, raw2 = best
+    else:
+        stairs_start = min(start_stairs, key=lambda s: abs(s[0]-sx)+abs(s[1]-sy))
+        stairs_goal  = min(goal_stairs, key=lambda s: abs(s[0]-gx)+abs(s[1]-gy))
+        raw1 = bfs_single_floor(PRE[sf]["grid"], (sx, sy), stairs_start)
+        raw2 = bfs_single_floor(PRE[gf]["grid"], stairs_goal, (gx, gy))
+
+    if not raw1 or not raw2:
+        return {"success": False}
+
+    path = []
+    path += [{"floor": sf, "x": x, "y": y} for x, y in raw1]
+    path += [{"floor": gf, "x": x, "y": y} for x, y in raw2]
+
+    img1 = draw_overlay(sf, raw1)
+    img2 = draw_overlay(gf, raw2)
+    outfile = OUTPUT_DIR / f"route_coords_{sf}_{gf}_{time.time()}.json"
+    with open(outfile, "w") as f:
+        json.dump(path, f, indent=2)
+
+    return {"success": True, "path": path, "overlay": [img1, img2], "json_file": str(outfile)}
