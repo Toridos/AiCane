@@ -1,0 +1,44 @@
+:root {
+  --font-size: 16px;
+  --background: #ffffff;
+  --foreground: #111827;
+  --card: #ffffff;
+  --primary: #030213;
+  --muted: #ececf0;
+  --radius: 10px;
+}
+
+*{box-sizing:border-box}
+body{font-family:Inter,system-ui,Arial,Helvetica,sans-serif;margin:0;background:var(--background);color:var(--foreground)}
+.container{max-width:1100px;margin:0 auto;padding:24px}
+.site-header{position:sticky;top:0;background:rgba(255,255,255,0.85);backdrop-filter:blur(4px);border-bottom:1px solid #e6e7ea}
+.site-header .container{display:flex;align-items:center;justify-content:space-between}
+.brand{font-weight:700;cursor:pointer}
+.nav-desktop{display:flex;gap:12px}
+.nav-desktop button{background:none;border:none;padding:8px 12px;cursor:pointer}
+.nav-mobile-btn{display:none}
+@media(max-width:768px){.nav-desktop{display:none}.nav-mobile-btn{display:block}}
+
+.landing .hero{padding:48px 0;text-align:center}
+.landing .badge{display:inline-block;padding:6px 12px;background:#e6f0ff;color:#145db5;border-radius:999px;margin-bottom:12px}
+.landing h1{font-size:28px;margin:8px 0}
+.landing p{color:#6b7280}
+.cta{background:#2563eb;color:white;padding:10px 18px;border-radius:8px;border:none;cursor:pointer}
+.features{display:flex;gap:16px;margin-top:24px}
+.feature{flex:1;background:var(--card);padding:20px;border-radius:12px;text-align:center}
+
+.route-planner .planner-grid{display:grid;grid-template-columns:1fr 360px;gap:20px}
+.floor-card{background:var(--card);padding:16px;border-radius:12px;border:1px solid #eef2f7}
+.floor-controls{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.floor-visual{height:360px;display:flex;align-items:center;justify-content:center;border-radius:8px;background:#fff}
+.placeholder{color:#9ca3af}
+.form-card{background:var(--card);padding:16px;border-radius:12px;border:1px solid #eef2f7;display:flex;flex-direction:column;gap:8px}
+.form-card input{padding:10px;border-radius:6px;border:1px solid #e6e7ea}
+.generate{background:#2563eb;color:white;padding:10px;border-radius:8px;border:none;cursor:pointer}
+
+.team{padding:40px 0;}
+.team-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px; }
+.member{background:var(--card);padding:16px;border-radius:10px;text-align:center; }
+.avatar{width:56px;height:56px;border-radius:999px;background:linear-gradient(45deg,#60a5fa,#2563eb);display:flex;align-items:center;justify-content:center;color:white;margin:0 auto 8px}
+
+@media(max-width:900px){.team-grid{grid-template-columns:repeat(2,1fr)}.route-planner .planner-grid{grid-template-columns:1fr}}

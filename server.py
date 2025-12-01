@@ -1,6 +1,7 @@
 # server.py
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 import json, time, uuid, cv2
 import numpy as np
@@ -14,6 +15,14 @@ app.add_middleware(
     allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
+)
+
+# Serve static files from the `static/` folder at the `/static` URL path
+# Use an absolute path based on this file's directory to avoid CWD issues.
+app.mount(
+    "/static",
+    StaticFiles(directory=str(Path(__file__).parent / "static")),
+    name="static",
 )
 
 # ---------------------------------------------------
@@ -92,12 +101,34 @@ def generate_path(req: Req):
     # --------------------------------------------------
     # 복층
     # --------------------------------------------------
-    # 계단은 좌표가 여러개 있을 수 있으니 가장 가까운 것 선택
-    stairs_start = min(PRE[start_f]["stairs"], key=lambda s: abs(s[0]-sx)+abs(s[1]-sy))
-    stairs_goal  = min(PRE[goal_f]["stairs"], key=lambda s: abs(s[0]-gx)+abs(s[1]-gy))
+    # 계단을 반드시 같은 계단(같은 스택/샤프트)으로 사용하도록 시도합니다.
+    # 방법: 시작층의 각 계단 후보에 대해 목표층에서 가장 가까운 대응 계단을 찾고,
+    # 양쪽에서 실제 경로(raw1, raw2)가 생성되는 조합 중 비용(경로 길이 합)이 가장 작은 것을 선택합니다.
+    start_stairs = PRE[start_f]["stairs"]
+    goal_stairs = PRE[goal_f]["stairs"]
 
-    raw1 = bfs_single_floor(PRE[start_f]["grid"], (sx,sy), stairs_start)
-    raw2 = bfs_single_floor(PRE[goal_f]["grid"], stairs_goal, (gx,gy))
+    best = None
+    best_score = None
+    # iterate start stairs and match to nearest on goal floor
+    for s in start_stairs:
+        # find nearest candidate on goal floor (by squared distance)
+        t = min(goal_stairs, key=lambda g: (g[0]-s[0])**2 + (g[1]-s[1])**2)
+        raw1_cand = bfs_single_floor(PRE[start_f]["grid"], (sx,sy), s)
+        raw2_cand = bfs_single_floor(PRE[goal_f]["grid"], t, (gx,gy))
+        if raw1_cand and raw2_cand:
+            score = len(raw1_cand) + len(raw2_cand)
+            if best is None or score < best_score:
+                best = (s, t, raw1_cand, raw2_cand)
+                best_score = score
+
+    if best is not None:
+        stairs_start, stairs_goal, raw1, raw2 = best
+    else:
+        # fallback: independent nearest (기존 동작)
+        stairs_start = min(start_stairs, key=lambda s: abs(s[0]-sx)+abs(s[1]-sy))
+        stairs_goal  = min(goal_stairs, key=lambda s: abs(s[0]-gx)+abs(s[1]-gy))
+        raw1 = bfs_single_floor(PRE[start_f]["grid"], (sx,sy), stairs_start)
+        raw2 = bfs_single_floor(PRE[goal_f]["grid"], stairs_goal, (gx,gy))
 
     if not raw1 or not raw2:
         return {"success":False}
