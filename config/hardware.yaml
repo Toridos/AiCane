@@ -1,0 +1,27 @@
+# 하드웨어 설정
+
+robot:
+  port: 'COM3'
+  baudrate: 9600
+  timeout: 1.0
+
+lidar:
+  port: '/dev/ttyUSB0'
+  baudrate: 115200
+  enabled: false  # LiDAR 사용 여부
+
+ultrasonic:
+  pins:
+    front: 12
+    left: 2
+    right: 3
+  
+  # 거리 임계값 (cm)
+  critical_distance: 25
+  warning_distance: 50
+  safe_distance: 100
+
+speed:
+  min_level: 6
+  max_level: 15
+  default_level: 10

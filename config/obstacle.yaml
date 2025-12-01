@@ -1,0 +1,10 @@
+# 장애물 회피 설정
+
+ultrasonic:
+  sudden_change_threshold_cm: 40
+  gradual_change_threshold_cm: 10
+
+avoidance:
+  enable: true
+  avoidance_distance_cm: 100
+  retry_count: 3

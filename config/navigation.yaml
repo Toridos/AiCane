@@ -1,0 +1,29 @@
+# 주행 설정
+
+control:
+  rate_hz: 5  # 제어 주기
+  goal_threshold_cm: 5.0  # 목표 도달 판정 거리
+  angle_threshold_deg: 15.0  # 회전 우선 각도
+
+waypoint:
+  max_gap_cm: 50.0  # 웨이포인트 최대 간격
+  interpolate: true  # 자동 보간 여부
+
+speed:
+  # 전진 속도 (거리에 따라)
+  forward_levels:
+    far: 12      # >50cm
+    medium: 10   # 20~50cm
+    near: 8      # 10~20cm
+  
+  # 회전 속도 (각도에 따라)
+  rotate_levels:
+    large: 10    # >45도
+    small: 8     # <45도
+
+localization:
+  # 3-Tier 시스템
+  lost_threshold: 20  # Tier 2에서 Tier 3로 전환 (스텝 수)
+  
+  # 초음파 신뢰도 임계값
+  ultrasonic_confidence_threshold: 0.5
