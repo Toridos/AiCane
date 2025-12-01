@@ -1,5 +1,5 @@
 # 상단 import 유지
-import cv2, time, signal
+import cv2, time
 import perceive as P
 import sensors
 from fsm import tick
@@ -14,15 +14,18 @@ except Exception as e:
     print(f"[WARNING] 컨트롤러 연결 실패: {e}")
     print("[INFO] 카메라 전용 모드로 실행합니다")
 
-_shutdown = False
-def _on_signal(*_):
-    global _shutdown
-    _shutdown = True
-    print("\n[SYSTEM] 종료 신호 감지")
-signal.signal(signal.SIGINT, _on_signal)
-signal.signal(signal.SIGTERM, _on_signal)
+# 컨트롤러 초기화
+if controller_available:
+    try:
+        if not ctrl.init():
+            print("[MAIN] ctrl.init() 실패 — 보드 미연결 또는 권한 문제")
+            controller_available = False
+    except Exception as e:
+        print(f"[MAIN] ctrl.init() 예외: {e}")
+        controller_available = False
 
 def main():
+    
     print("="*70)
     print("종료: 'q'/ESC 또는 Ctrl+C")
     print("="*70)
@@ -36,7 +39,7 @@ def main():
     last_ok_frame_ts = time.time()
 
     try:
-        while not _shutdown:
+        while True:
             frame = P.get_frame()
 
             # 프레임 None 방어
@@ -44,7 +47,7 @@ def main():
                 consecutive_none += 1
                 if consecutive_none == 1:
                     print("[WARN] frame=None (워밍업/유실 가능) ... 대기")
-                # 오래 None이면 카메라 재시작 시도
+
                 if consecutive_none >= NONE_THRESHOLD:
                     print("[WARN] 프레임 유실 지속 → 카메라 재시작")
                     try:
@@ -53,11 +56,13 @@ def main():
                         print(f"[WARN] 카메라 종료 중 예외: {e}")
                     time.sleep(0.5)
                     consecutive_none = 0
-                time.sleep(0.05)
-                # 다음 루프로
+
                 key = cv2.waitKey(1) & 0xFF
                 if key in (ord('q'), ord('Q'), 27):
+                    print("\n[SYSTEM] 종료 키 입력")
                     break
+
+                time.sleep(0.05)
                 continue
 
             # 정상 프레임
@@ -65,7 +70,15 @@ def main():
             last_ok_frame_ts = time.time()
 
             # 센서 읽기 (0/1 정규화 반영)
-            prox = sensors.read_proximity()
+            # 컨트롤러(보드)가 연결되지 않은 경우, 센서 읽기를 건너뛰고 (0,0,0)으로 처리
+            if controller_available:
+                try:
+                    prox = sensors.read_proximity()
+                except Exception as e:
+                    print(f"[WARN] 센서 읽기 실패, prox=(0,0,0)로 대체: {e}")
+                    prox = (0, 0, 0)
+            else:
+                prox = (0, 0, 0)
 
             # 상태 머신
             state = tick(frame, prox=prox)

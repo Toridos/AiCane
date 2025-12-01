@@ -1,8 +1,9 @@
 # === 팀별로 여기만 바꾸세요 ===
-COM_PORT       = "COM3"      # 각자 PC 포트 (예: "COM3","COM5"...)
+COM_PORT = "/dev/cu.usbserial-0001"    # 각자 PC 포트 (예: "COM3","COM5"...)
 MOTOR_TYPE     = 1           # DC motor=1 (교안 규격)
 CAM_INDEX      = 0           # 노트북 웹캠=0, USB카메라면 1일 수도 있음
-FRAME_W, FRAME_H = 640, 480  # OpenCV 캐처 해상도
+FRAME_W = 320  # 640 → 320
+FRAME_H = 240 # OpenCV 캐처 해상도
 
 # 주행 파라미터 (개선됨)
 SPEED_FWD       = 8          # 전진 속도 (기존 9 → 8로 안정성 향상)

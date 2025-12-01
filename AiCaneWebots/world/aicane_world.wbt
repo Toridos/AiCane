@@ -1,0 +1,231 @@
+#VRML_SIM R2025a utf8
+
+WorldInfo {
+  basicTimeStep 16
+  coordinateSystem "ENU"
+}
+
+Background {
+  skyColor [ 0.2 0.2 0.25 ]
+}
+
+DirectionalLight {
+  ambientIntensity 0.6
+  direction -1 -1 -1
+}
+
+# === 카메라 ===
+Viewpoint {
+  orientation 0.1 1 0 -1.2
+  position -4 0 2
+  follow "robot"
+  followSmoothness 0.5
+}
+
+# === 바닥 ===
+Solid {
+  translation 0 0 0
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.7 0.7 0.7
+      }
+      geometry Box {
+        size 10 0.02 10
+      }
+    }
+  ]
+  name "ground"
+  boundingObject Box {
+    size 10 0.02 10
+  }
+}
+
+# === AiCane Simple Robot ===
+Robot {
+  translation -2 0.11 0.05
+  rotation 0 1 0 0
+  name "robot"
+  controller "aicane_controller"
+
+  children [
+    # Body
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.2 0.5 0.9
+      }
+      geometry Box {
+        size 0.3 0.2 0.1
+      }
+    }
+
+    # --- Localization sensors ---
+    GPS {
+      name "gps"
+      accuracy 0.01
+    }
+
+    InertialUnit {
+      name "inertial unit"
+    }
+
+    # --- Wheels ---
+    HingeJoint {
+      jointParameters HingeJointParameters {
+        axis 0 1 0
+        anchor 0.12 0.09 0.03
+      }
+      device [ RotationalMotor { name "front_left_wheel" } ]
+      endPoint Solid {
+        name "front_left_solid"
+        translation 0.12 0.09 0.03
+        children [
+          Shape {
+            geometry Cylinder {
+              height 0.02
+              radius 0.03
+            }
+          }
+        ]
+        boundingObject Cylinder {
+          height 0.02
+          radius 0.03
+        }
+        physics Physics {
+          mass 0.05
+        }
+      }
+    }
+
+    HingeJoint {
+      jointParameters HingeJointParameters {
+        axis 0 1 0
+        anchor 0.12 -0.09 0.03
+      }
+      device [ RotationalMotor { name "front_right_wheel" } ]
+      endPoint Solid {
+        name "front_right_solid"
+        translation 0.12 -0.09 0.03
+        children [
+          Shape {
+            geometry Cylinder {
+              height 0.02
+              radius 0.03
+            }
+          }
+        ]
+        boundingObject Cylinder {
+          height 0.02
+          radius 0.03
+        }
+        physics Physics {
+          mass 0.05
+        }
+      }
+    }
+
+    HingeJoint {
+      jointParameters HingeJointParameters {
+        axis 0 1 0
+        anchor -0.12 0.09 0.03
+      }
+      device [ RotationalMotor { name "rear_left_wheel" } ]
+      endPoint Solid {
+        name "rear_left_solid"
+        translation -0.12 0.09 0.03
+        children [
+          Shape {
+            geometry Cylinder {
+              height 0.02
+              radius 0.03
+            }
+          }
+        ]
+        boundingObject Cylinder {
+          height 0.02
+          radius 0.03
+        }
+        physics Physics {
+          mass 0.05
+        }
+      }
+    }
+
+    HingeJoint {
+      jointParameters HingeJointParameters {
+        axis 0 1 0
+        anchor -0.12 -0.09 0.03
+      }
+      device [ RotationalMotor { name "rear_right_wheel" } ]
+      endPoint Solid {
+        name "rear_right_solid"
+        translation -0.12 -0.09 0.03
+        children [
+          Shape {
+            geometry Cylinder {
+              height 0.02
+              radius 0.03
+            }
+          }
+        ]
+        boundingObject Cylinder {
+          height 0.02
+          radius 0.03
+        }
+        physics Physics {
+          mass 0.05
+        }
+      }
+    }
+
+    # === Sensors (with 4m range) ===
+    DistanceSensor {
+      translation 0.18 0 0.06
+      name "us_front"
+      type "sonar"
+      lookupTable [ 0 0 0  4 4 0 ]
+    }
+
+    DistanceSensor {
+      translation 0.06 0.12 0.06
+      rotation 0 0 1 1.57
+      name "us_left"
+      type "sonar"
+      lookupTable [ 0 0 0  4 4 0 ]
+    }
+
+    DistanceSensor {
+      translation 0.06 -0.12 0.06
+      rotation 0 0 1 -1.57
+      name "us_right"
+      type "sonar"
+      lookupTable [ 0 0 0  4 4 0 ]
+    }
+  ]
+
+  boundingObject Box {
+    size 0.3 0.2 0.1
+  }
+  physics Physics {
+    mass 1
+  }
+}
+
+# 장애물
+Solid {
+  translation 1.5 0 0.2
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 1 0 0
+      }
+      geometry Box {
+        size 0.4 0.4 0.4
+      }
+    }
+  ]
+  name "obstacle_1"
+  boundingObject Box {
+    size 0.4 0.4 0.4
+  }
+}
