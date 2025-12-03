@@ -1,0 +1,27 @@
+{
+  "start_point": [
+    2964,
+    854
+  ],
+  "goal_point": [
+    2968,
+    1013
+  ],
+  "start_scaled": [
+    477,
+    140
+  ],
+  "goal_scaled": [
+    478,
+    166
+  ],
+  "path": null,
+  "orig_size": [
+    4961,
+    3508
+  ],
+  "new_size": [
+    800,
+    576
+  ]
+}

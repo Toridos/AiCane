@@ -1,0 +1,13 @@
+{
+  "success": true,
+  "path": [
+    {
+      "floor": 1,
+      "x": 300,
+      "y": 150
+    }
+  ],
+  "overlay": [
+    "/static/overlays/overlay_1_1f25f434acb24efa8d2ac48edc09f353.png"
+  ]
+}

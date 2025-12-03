@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Grid Viewer</title>
+
+    <!-- 정적 파일 FastAPI에서 로드 -->
+    <link rel="stylesheet" href="http://127.0.0.1:8000/static/viewer.css">
+    <link rel="icon" href="data:,">
+</head>
+<body>
+
+    <h2>Grid Viewer</h2>
+    <div style="margin-bottom:12px;">
+        <input id="roomInput" placeholder="Enter room name (e.g. Kitchen)" />
+        <button id="drawBtn">Draw Path</button>
+        <button id="reloadGridBtn">Reload Grid</button>
+    </div>
+    <canvas id="gridCanvas" width="800" height="600"></canvas>
+
+    <button onclick="drawPath()">경로 보기</button>
+    <input id="roomInput" placeholder="예: 115" />
+    <canvas id="gridCanvas" width="2667" height="1500"></canvas>
+
+
+    <!-- JS도 FastAPI에서 로드 -->
+    <script src="http://127.0.0.1:8000/static/viewer.js" defer></script>
+    <script>
+        // wire up buttons when the viewer script is loaded
+        window.addEventListener('DOMContentLoaded', () => {
+            const drawBtn = document.getElementById('drawBtn');
+            if (drawBtn) drawBtn.addEventListener('click', () => window.drawPath && window.drawPath());
+            const reloadBtn = document.getElementById('reloadGridBtn');
+            if (reloadBtn) reloadBtn.addEventListener('click', () => window.loadGrid && window.loadGrid());
+        });
+    </script>
+</body>
+</html>

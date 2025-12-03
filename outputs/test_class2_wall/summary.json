@@ -1,0 +1,21 @@
+{
+  "start": "117호",
+  "goal": "104호",
+  "start_point": [
+    561,
+    1244
+  ],
+  "goal_point": [
+    1748,
+    1023
+  ],
+  "start_scaled": [
+    135,
+    306
+  ],
+  "goal_scaled": [
+    422,
+    252
+  ],
+  "path_len": null
+}

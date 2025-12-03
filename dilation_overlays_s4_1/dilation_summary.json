@@ -1,0 +1,22 @@
+[
+  {
+    "r": 9,
+    "overlay": "dilation_overlays_s4_1\\dilate_9_overlay.png",
+    "path_len": null
+  },
+  {
+    "r": 11,
+    "overlay": "dilation_overlays_s4_1\\dilate_11_overlay.png",
+    "path_len": null
+  },
+  {
+    "r": 13,
+    "overlay": "dilation_overlays_s4_1\\dilate_13_overlay.png",
+    "path_len": null
+  },
+  {
+    "r": 17,
+    "overlay": "dilation_overlays_s4_1\\dilate_17_overlay.png",
+    "path_len": null
+  }
+]

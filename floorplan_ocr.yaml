@@ -1,0 +1,7 @@
+path: C:/SW_3_2/ai/AI_lab/yolo_dataset_seg
+
+train: images/train
+val: images/val
+
+nc: 6
+names: ["wall", "door", "room", "stair", "elevator", "etc"]
