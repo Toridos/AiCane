@@ -17,5 +17,8 @@
     "@types/react": "18.0.28",
     "@types/react-dom": "18.0.11",
     "tslib": "2.6.0"
+  },
+  "engines": {
+  "node": ">=18"
   }
 }
