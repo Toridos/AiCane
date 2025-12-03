@@ -27,3 +27,92 @@ localization:
   
   # 초음파 신뢰도 임계값
   ultrasonic_confidence_threshold: 0.5
+
+# ============================================
+# 장애물 감지 설정 (360도 LiDAR!)
+# ============================================
+obstacle_detection:
+  # 감지 모드
+  # - ultrasonic: 초음파만 (3방향)
+  # - lidar: LiDAR만 (360도)
+  # - hybrid: 초음파 + LiDAR (추천!) ✅
+  mode: hybrid
+  
+  # 초음파 설정
+  ultrasonic:
+    min_distance: 50              # 장애물 판단 거리 (cm)
+    emergency_stop: 30            # 긴급 정지 거리 (cm)
+    check_rate: 5                 # 체크 속도 (Hz)
+  
+  # LiDAR 설정 (360도!)
+  lidar:
+    min_distance: 50              # 장애물 판단 거리 (cm)
+    path_width: 60                # 진행 방향 감지 폭 (degrees)
+    min_gap_width: 80             # 통과 가능 최소 폭 (degrees)
+    scan_rate: 10                 # 스캔 속도 (Hz)
+    
+    # 섹터별 설정 (8방향)
+    sectors: 8                    # 방향 개수
+    
+    # 우회 경로 설정
+    avoidance:
+      enabled: true               # 자동 우회 활성화
+      safety_margin: 20           # 안전 마진 (cm)
+      max_deviation: 90           # 최대 우회 각도 (degrees)
+  
+  # 하이브리드 설정 (초음파 + LiDAR)
+  hybrid:
+    # 신뢰도 임계값
+    # - high: 둘 다 감지해야 장애물
+    # - medium: 하나만 감지해도 장애물 (기본)
+    # - low: 초음파 우선
+    confidence_threshold: medium
+    
+    # 우선순위
+    # - ultrasonic: 근거리는 초음파 신뢰
+    # - lidar: 원거리는 LiDAR 신뢰
+    # - equal: 동등하게 처리
+    priority: ultrasonic
+    
+    # 근거리 기준 (cm)
+    close_range: 30
+
+# ============================================
+# 경로 재계획 설정
+# ============================================
+path_replanning:
+  # 자동 재계획 활성화
+  enabled: true
+  
+  # 재계획 조건
+  triggers:
+    obstacle_detected: true       # 장애물 감지 시
+    path_blocked: true            # 경로 막힘
+    multiple_failures: true       # 3회 연속 실패
+  
+  # 재계획 방법
+  strategy:
+    # 1. LiDAR로 우회 경로 찾기
+    use_lidar_gaps: true
+    
+    # 2. 복도 기반 대체 경로
+    use_corridor_path: true
+    
+    # 3. 후진 후 재시도
+    allow_backward: true
+    backup_distance: 50           # 후진 거리 (cm)
+
+# ============================================
+# 사용 예시
+# ============================================
+#
+# 1. 초음파만 (간단):
+#    obstacle_detection.mode: ultrasonic
+#
+# 2. LiDAR만 (360도):
+#    obstacle_detection.mode: lidar
+#
+# 3. 하이브리드 (추천!):
+#    obstacle_detection.mode: hybrid
+#    → 초음파: 근거리 신뢰
+#    → LiDAR: 360도 감지 + 우회 경로

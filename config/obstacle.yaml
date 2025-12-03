@@ -1,10 +1,105 @@
 # 장애물 회피 설정
+# 
+# ⚠️ DEPRECATION NOTICE:
+# 기본 장애물 감지 설정은 navigation.yaml의 obstacle_detection으로 이동했습니다.
+# 이 파일은 미끄러짐 감지 전용 설정을 포함합니다.
+#
+# 📋 설정 파일 역할:
+# - obstacle.yaml: 미끄러짐 vs 장애물 구분 (이 파일)
+# - navigation.yaml: 장애물 감지 (초음파, LiDAR, 하이브리드)
+#
 
-ultrasonic:
+# ============================================
+# 미끄러짐 vs 장애물 감지 (Slip Detection)
+# ============================================
+slip_detection:
+  # 미끄러짐 판단 임계값
+  # 초음파 거리가 급격히 변할 때 = 미끄러짐 (로봇 이동)
+  # 초음파 거리가 점진적으로 변할 때 = 장애물 (실제 물체)
+  
+  # 급격한 변화 임계값 (cm)
+  # 한 스텝에 이 이상 변하면 "미끄러짐"으로 판단
   sudden_change_threshold_cm: 40
+  
+  # 점진적 변화 임계값 (cm)
+  # 여러 스텝에 걸쳐 천천히 변하면 "정상 이동"
   gradual_change_threshold_cm: 10
+  
+  # 미끄러짐 판단 시간 윈도우
+  # 이 시간(초) 동안의 변화량을 분석
+  time_window_sec: 1.0
+  
+  # 미끄러짐 신뢰도 임계값
+  # 이 값 이상이면 확실한 미끄러짐
+  confidence_threshold: 0.7
 
+# ============================================
+# 회피 전략 (Avoidance Strategy)
+# ============================================
 avoidance:
+  # 회피 활성화
   enable: true
+  
+  # 회피 시작 거리 (cm)
+  # 이 거리 이내에 장애물이 있으면 회피 시작
   avoidance_distance_cm: 100
+  
+  # 재시도 횟수
+  # 회피 실패 시 몇 번까지 재시도할지
   retry_count: 3
+  
+  # 회피 전략
+  # - simple: 좌/우 단순 회피
+  # - smart: LiDAR 기반 최적 경로 (navigation.yaml 참조)
+  strategy: simple
+  
+  # 회피 방향 우선순위
+  # - left_first: 좌측 우선
+  # - right_first: 우측 우선
+  # - nearest: 가까운 쪽
+  direction_priority: left_first
+
+# ============================================
+# 통합 참조
+# ============================================
+# 
+# 📋 장애물 감지 통합 설정은 navigation.yaml을 참조하세요:
+# 
+# navigation.yaml:
+#   obstacle_detection:
+#     mode: hybrid                # 초음파 + LiDAR
+#     
+#     ultrasonic:
+#       min_distance: 50          # 장애물 판단 거리
+#       emergency_stop: 30        # 긴급 정지 거리
+#     
+#     lidar:
+#       min_distance: 50
+#       path_width: 60            # 진행 방향 감지 폭
+#       min_gap_width: 80         # 통과 가능 폭
+#     
+#     hybrid:
+#       confidence_threshold: medium
+#       priority: ultrasonic      # 근거리는 초음파 신뢰
+#   
+#   path_replanning:
+#     enabled: true
+#     strategy:
+#       use_lidar_gaps: true      # LiDAR 우회 경로
+#       use_corridor_path: true
+#       allow_backward: true
+#
+# ============================================
+# 사용 예시
+# ============================================
+#
+# from aicane_navigation.utils import ConfigLoader
+# 
+# # 미끄러짐 감지 설정
+# obstacle_config = ConfigLoader.load_yaml('./config/obstacle.yaml')
+# slip_threshold = obstacle_config['slip_detection']['sudden_change_threshold_cm']
+# 
+# # 장애물 감지 설정 (navigation.yaml)
+# nav_config = ConfigLoader.load_navigation_config()
+# obs_mode = nav_config['obstacle_detection']['mode']  # 'hybrid'
+#

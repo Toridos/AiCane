@@ -1,6 +1,6 @@
 """
-RobokitRS 하드웨어 드라이버 (블루투스 지원)
-메카넘휠 제어 및 초음파 센서 인터페이스
+RobokitRS 하드웨어 드라이버 (개선 통합 버전)
+블루투스 자동 연결 + 센서 초기화 + 에러 처리
 """
 
 import time
@@ -10,37 +10,40 @@ import os
 
 class RobokitDriver:
     """
-    RobokitRS 하드웨어 제어
+    RobokitRS 하드웨어 제어 (개선 버전)
     
-    - 메카넘휠 제어 (속도 레벨 6~15)
-    - 초음파 센서 읽기 (3개: 정면/좌/우)
-    - 블루투스 자동 연결 지원
+    팀원 제안 + 블루투스 기능 통합
     """
     
-    # 초음파 센서 핀
+    # 초음파 센서 핀 (실제 배선에 맞게 수정 필요!)
     ULTRASONIC_PINS = {
-        'front': 12,
+        'front': 12,  # ← 실제 배선 확인 필요!
         'left': 2,
         'right': 3,
     }
     
-    def __init__(self, port=None, baudrate=9600, timeout=1.0, mock=False,
-                 bluetooth_mac=None, auto_connect=True):
+    def __init__(self, 
+                 port=None,
+                 baudrate=115200,
+                 timeout=1.0, 
+                 mock=False,
+                 bluetooth_mac=None,
+                 auto_connect=True):
         """
         Args:
             port (str): 시리얼 포트 (None이면 자동 탐색)
             baudrate (int): 통신 속도
-            timeout (float): 타임아웃 (초)
-            mock (bool): 테스트용 Mock 모드
-            bluetooth_mac (str): 블루투스 MAC 주소 (예: '98:D3:31:XX:XX:XX')
-            auto_connect (bool): 블루투스 자동 연결 시도
+            timeout (float): 타임아웃
+            mock (bool): Mock 모드
+            bluetooth_mac (str): 블루투스 MAC 주소
+            auto_connect (bool): 자동 연결
         """
         self.baudrate = baudrate
         self.timeout = timeout
         self.mock = mock
         self.bluetooth_mac = bluetooth_mac
         
-        # 현재 명령 상태 (오도메트리용)
+        # 현재 명령 상태
         self.current_command = {
             'direction': 'STOP',
             'speed_level': 0,
@@ -56,7 +59,6 @@ class RobokitDriver:
         
         # 포트 결정
         if port is None:
-            # 자동 탐색
             port = self._find_serial_port(bluetooth_mac, auto_connect)
         
         self.port = port
@@ -71,71 +73,48 @@ class RobokitDriver:
         self._connect_robot()
     
     def _find_serial_port(self, bluetooth_mac, auto_connect):
-        """
-        시리얼 포트 자동 탐색
-        
-        Args:
-            bluetooth_mac (str): 블루투스 MAC 주소
-            auto_connect (bool): 자동 연결 시도
-        
-        Returns:
-            str: 포트 경로 또는 None
-        """
+        """시리얼 포트 자동 탐색"""
         print("🔍 시리얼 포트 탐색 중...")
         
-        # 1. /dev/rfcomm* 확인 (블루투스)
+        # 1. /dev/rfcomm* (블루투스)
         for i in range(5):
             port = f'/dev/rfcomm{i}'
             if os.path.exists(port):
                 print(f"✅ 블루투스 포트 발견: {port}")
                 return port
         
-        # 2. /dev/ttyUSB* 확인 (USB)
+        # 2. /dev/ttyUSB*
         for i in range(5):
             port = f'/dev/ttyUSB{i}'
             if os.path.exists(port):
                 print(f"✅ USB 포트 발견: {port}")
                 return port
         
-        # 3. /dev/ttyACM* 확인
+        # 3. /dev/ttyACM*
         for i in range(5):
             port = f'/dev/ttyACM{i}'
             if os.path.exists(port):
                 print(f"✅ ACM 포트 발견: {port}")
                 return port
         
-        # 4. 블루투스 자동 연결 시도
+        # 4. 블루투스 자동 연결
         if auto_connect and bluetooth_mac:
             print(f"🔗 블루투스 연결 시도: {bluetooth_mac}")
             port = self._connect_bluetooth(bluetooth_mac)
             if port:
                 return port
         
-        print("❌ 사용 가능한 포트가 없습니다.")
-        print("\n💡 블루투스 수동 연결 방법:")
-        print("   sudo rfcomm bind 0 <MAC_ADDRESS> 1")
-        print("   예: sudo rfcomm bind 0 98:D3:31:XX:XX:XX 1")
-        
         return None
     
     def _connect_bluetooth(self, mac_address):
-        """
-        블루투스 자동 연결
-        
-        Args:
-            mac_address (str): MAC 주소
-        
-        Returns:
-            str: 포트 경로 또는 None
-        """
+        """블루투스 자동 연결"""
         try:
-            # rfcomm 바인딩
             cmd = ['sudo', 'rfcomm', 'bind', '0', mac_address, '1']
             result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
             
             if result.returncode == 0:
                 print("✅ 블루투스 연결 성공")
-                time.sleep(2)  # 연결 안정화 대기
+                time.sleep(2)
                 
                 if os.path.exists('/dev/rfcomm0'):
                     return '/dev/rfcomm0'
@@ -148,19 +127,44 @@ class RobokitDriver:
         return None
     
     def _connect_robot(self):
-        """RobokitRS 라이브러리 연결"""
-        try:
-            from RobokitRS import RobokitRS
-            
-            print(f"🔌 RobokitRS 연결 시도: {self.port}")
-            self.robot = RobokitRS(port=self.port)
-            
-            print(f"✅ RobokitRS 연결 성공: {self.port}")
-            
-            # 초기화 - 정지 상태로
-            self.robot.set_mecanumwheels_stop()
-            time.sleep(0.1)
+        """
+        RobokitRS 라이브러리 연결
         
+        두 가지 방식 모두 시도:
+        1. from RobokitRS import RobokitRS
+        2. from RobokitRS.RobokitRS import RobokitRS
+        """
+        try:
+            # 방법 1 시도
+            try:
+                from RobokitRS import RobokitRS
+                print("📦 RobokitRS 라이브러리 로드 (방법 1)")
+                
+                # 생성자에 포트 전달 방식
+                try:
+                    self.robot = RobokitRS(port=self.port)
+                    print(f"✅ RobokitRS 연결 성공 (생성자): {self.port}")
+                except:
+                    # 분리된 초기화 방식
+                    self.robot = RobokitRS()
+                    self.robot.port_open(self.port)
+                    print(f"✅ RobokitRS 연결 성공 (port_open): {self.port}")
+            
+            except ImportError:
+                # 방법 2 시도
+                from RobokitRS.RobokitRS import RobokitRS
+                print("📦 RobokitRS 라이브러리 로드 (방법 2)")
+                
+                self.robot = RobokitRS()
+                self.robot.port_open(self.port)
+                print(f"✅ RobokitRS 연결 성공: {self.port}")
+            
+            # 초음파 센서 초기화
+            self._init_sensors()
+            
+            # 초기 정지 상태
+            self._initial_stop()
+            
         except ImportError:
             print("❌ RobokitRS 라이브러리가 설치되지 않았습니다.")
             print("   설치: pip install RobokitRS")
@@ -170,20 +174,46 @@ class RobokitDriver:
         except Exception as e:
             print(f"❌ RobokitRS 연결 실패: {e}")
             print(f"   포트: {self.port}")
-            print(f"   권한 확인: sudo chmod 666 {self.port}")
             self.mock = True
             self.robot = None
+    
+    def _init_sensors(self):
+        """초음파 센서 초기화 (필요 시)"""
+        try:
+            # sonar_begin이 있는지 확인
+            if hasattr(self.robot, 'sonar_begin'):
+                print("🔧 초음파 센서 초기화 중...")
+                for name, pin in self.ULTRASONIC_PINS.items():
+                    self.robot.sonar_begin(pin)
+                    print(f"   ✓ {name} (핀 {pin})")
+            else:
+                print("ℹ️  초음파 센서 자동 초기화 (sonar_begin 불필요)")
+        
+        except Exception as e:
+            print(f"⚠️ 센서 초기화 경고: {e}")
+    
+    def _initial_stop(self):
+        """초기 정지 상태로 설정"""
+        try:
+            # 여러 정지 메서드 시도
+            if hasattr(self.robot, 'set_mecanumwheels_stop'):
+                self.robot.set_mecanumwheels_stop()
+            elif hasattr(self.robot, 'set_mecanumwheels_drive_stop'):
+                self.robot.set_mecanumwheels_drive_stop()
+            
+            time.sleep(0.1)
+            print("✅ 초기 정지 상태")
+        
+        except Exception as e:
+            print(f"⚠️ 정지 명령 경고: {e}")
     
     def set_motion(self, direction, speed_level):
         """
         로봇 모션 명령
         
-        Args:
-            direction (str): 'FORWARD', 'BACKWARD', 'LEFT', 'RIGHT',
-                           'ROTATE_L', 'ROTATE_R', 'STOP'
-            speed_level (int): 속도 레벨 (6~15, 0=정지)
+        여러 API 버전 대응
         """
-        # 명령 기록 (오도메트리용)
+        # 명령 기록
         self.current_command = {
             'direction': direction,
             'speed_level': speed_level,
@@ -198,41 +228,72 @@ class RobokitDriver:
         # 실제 명령 전송
         try:
             if direction == 'STOP':
-                self.robot.set_mecanumwheels_stop()
-            
+                self._send_stop()
             elif direction == 'FORWARD':
-                self.robot.set_mecanumwheels_drive_front(speed_level)
-            
+                self._send_forward(speed_level)
             elif direction == 'BACKWARD':
-                self.robot.set_mecanumwheels_drive_back(speed_level)
-            
+                self._send_backward(speed_level)
             elif direction == 'LEFT':
-                self.robot.set_mecanumwheels_drive_left(speed_level)
-            
+                self._send_left(speed_level)
             elif direction == 'RIGHT':
-                self.robot.set_mecanumwheels_drive_right(speed_level)
-            
+                self._send_right(speed_level)
             elif direction == 'ROTATE_L':
-                self.robot.set_mecanumwheels_turn_left(speed_level)
-            
+                self._send_rotate_left(speed_level)
             elif direction == 'ROTATE_R':
-                self.robot.set_mecanumwheels_turn_right(speed_level)
-            
+                self._send_rotate_right(speed_level)
             else:
                 print(f"⚠️ 알 수 없는 방향: {direction}")
         
         except Exception as e:
             print(f"❌ 모션 명령 실패: {e}")
     
+    # API 호환성을 위한 헬퍼 메서드
+    def _send_stop(self):
+        """정지 (여러 API 대응)"""
+        if hasattr(self.robot, 'set_mecanumwheels_stop'):
+            self.robot.set_mecanumwheels_stop()
+        elif hasattr(self.robot, 'set_mecanumwheels_drive_stop'):
+            self.robot.set_mecanumwheels_drive_stop()
+    
+    def _send_forward(self, speed):
+        if hasattr(self.robot, 'set_mecanumwheels_drive_front'):
+            self.robot.set_mecanumwheels_drive_front(speed)
+        elif hasattr(self.robot, 'set_mecanumwheels_front'):
+            self.robot.set_mecanumwheels_front(speed)
+    
+    def _send_backward(self, speed):
+        if hasattr(self.robot, 'set_mecanumwheels_drive_back'):
+            self.robot.set_mecanumwheels_drive_back(speed)
+        elif hasattr(self.robot, 'set_mecanumwheels_back'):
+            self.robot.set_mecanumwheels_back(speed)
+    
+    def _send_left(self, speed):
+        if hasattr(self.robot, 'set_mecanumwheels_drive_left'):
+            self.robot.set_mecanumwheels_drive_left(speed)
+        elif hasattr(self.robot, 'set_mecanumwheels_left'):
+            self.robot.set_mecanumwheels_left(speed)
+    
+    def _send_right(self, speed):
+        if hasattr(self.robot, 'set_mecanumwheels_drive_right'):
+            self.robot.set_mecanumwheels_drive_right(speed)
+        elif hasattr(self.robot, 'set_mecanumwheels_right'):
+            self.robot.set_mecanumwheels_right(speed)
+    
+    def _send_rotate_left(self, speed):
+        if hasattr(self.robot, 'set_mecanumwheels_turn_left'):
+            self.robot.set_mecanumwheels_turn_left(speed)
+        elif hasattr(self.robot, 'set_mecanumwheels_rotate_left'):
+            self.robot.set_mecanumwheels_rotate_left(speed)
+    
+    def _send_rotate_right(self, speed):
+        if hasattr(self.robot, 'set_mecanumwheels_turn_right'):
+            self.robot.set_mecanumwheels_turn_right(speed)
+        elif hasattr(self.robot, 'set_mecanumwheels_rotate_right'):
+            self.robot.set_mecanumwheels_rotate_right(speed)
+    
     def get_ultrasonic(self):
-        """
-        초음파 센서 읽기
-        
-        Returns:
-            dict: {'front': cm, 'left': cm, 'right': cm}
-                  측정 실패 시 None
-        """
-        # Mock 모드 - 랜덤 값
+        """초음파 센서 읽기"""
+        # Mock 모드
         if self.mock:
             import random
             return {
@@ -241,15 +302,19 @@ class RobokitDriver:
                 'right': random.uniform(100, 140),
             }
         
-        # 실제 센서 읽기
+        # 실제 센서
         try:
             distances = {}
             
             for name, pin in self.ULTRASONIC_PINS.items():
                 distance = self.robot.sonar_read(pin)
                 
-                # 유효 범위 체크 (2~200cm)
-                if distance is not None and 2 <= distance <= 400:
+                # None 처리
+                if distance is None:
+                    distance = 0.0
+                
+                # 유효 범위 체크
+                if 2 <= distance <= 400:
                     distances[name] = distance
                 else:
                     distances[name] = None
@@ -261,12 +326,7 @@ class RobokitDriver:
             return {'front': None, 'left': None, 'right': None}
     
     def get_current_command(self):
-        """
-        현재 명령 정보 반환 (오도메트리용)
-        
-        Returns:
-            dict: {'direction': str, 'speed_level': int, 'start_time': float}
-        """
+        """현재 명령 정보"""
         return self.current_command.copy()
     
     def stop(self):
@@ -284,26 +344,23 @@ class RobokitDriver:
     
     @staticmethod
     def list_available_ports():
-        """사용 가능한 포트 목록 출력"""
+        """사용 가능한 포트 목록"""
         print("\n📡 사용 가능한 포트:")
         
         found = False
         
-        # 블루투스
         for i in range(5):
             port = f'/dev/rfcomm{i}'
             if os.path.exists(port):
                 print(f"  - {port} (블루투스)")
                 found = True
         
-        # USB
         for i in range(5):
             port = f'/dev/ttyUSB{i}'
             if os.path.exists(port):
                 print(f"  - {port} (USB)")
                 found = True
         
-        # ACM
         for i in range(5):
             port = f'/dev/ttyACM{i}'
             if os.path.exists(port):
@@ -312,35 +369,29 @@ class RobokitDriver:
         
         if not found:
             print("  (없음)")
-            print("\n💡 블루투스 연결 확인:")
-            print("   1. 페어링: bluetoothctl")
-            print("   2. 바인딩: sudo rfcomm bind 0 <MAC> 1")
-            print("   3. 권한: sudo chmod 666 /dev/rfcomm0")
 
 
 if __name__ == '__main__':
     # 테스트
-    print("=== RobokitDriver 블루투스 테스트 ===\n")
+    print("=== RobokitDriver 통합 테스트 ===\n")
     
     # 포트 목록
     RobokitDriver.list_available_ports()
     
-    # Mock 모드로 테스트
+    # Mock 모드 테스트
     print("\n" + "="*50)
     print("Mock 모드 테스트")
     print("="*50)
     
     robot = RobokitDriver(mock=True)
     
-    # 모션 테스트
+    # 모션
     print("\n모션 명령:")
     robot.set_motion('FORWARD', 10)
     time.sleep(0.5)
-    robot.set_motion('ROTATE_L', 8)
-    time.sleep(0.5)
     robot.set_motion('STOP', 0)
     
-    # 초음파 테스트
+    # 초음파
     print("\n초음파 센서:")
     for i in range(3):
         distances = robot.get_ultrasonic()

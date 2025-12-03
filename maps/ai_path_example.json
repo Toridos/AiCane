@@ -1,0 +1,126 @@
+{
+  "success": true,
+  "start": 101,
+  "goal": 307,
+  "algorithm": "A*",
+  "total_distance_cm": 1500,
+  "estimated_time_sec": 120,
+  "path": [
+    {
+      "floor": 1,
+      "x": 120,
+      "y": 41,
+      "node_type": "start",
+      "room": "101호"
+    },
+    {
+      "floor": 1,
+      "x": 120,
+      "y": 60,
+      "node_type": "corridor"
+    },
+    {
+      "floor": 1,
+      "x": 120,
+      "y": 80,
+      "node_type": "corridor"
+    },
+    {
+      "floor": 1,
+      "x": 120,
+      "y": 100,
+      "node_type": "corridor"
+    },
+    {
+      "floor": 1,
+      "x": 140,
+      "y": 120,
+      "node_type": "turn"
+    },
+    {
+      "floor": 1,
+      "x": 160,
+      "y": 140,
+      "node_type": "stair_approach",
+      "stair_id": "stair_west"
+    },
+    {
+      "floor": 2,
+      "x": 160,
+      "y": 140,
+      "node_type": "stair_exit",
+      "stair_id": "stair_west",
+      "from_floor": 1,
+      "to_floor": 2
+    },
+    {
+      "floor": 2,
+      "x": 150,
+      "y": 120,
+      "node_type": "corridor"
+    },
+    {
+      "floor": 2,
+      "x": 150,
+      "y": 100,
+      "node_type": "corridor"
+    },
+    {
+      "floor": 2,
+      "x": 160,
+      "y": 140,
+      "node_type": "stair_approach",
+      "stair_id": "stair_west"
+    },
+    {
+      "floor": 3,
+      "x": 160,
+      "y": 140,
+      "node_type": "stair_exit",
+      "stair_id": "stair_west",
+      "from_floor": 2,
+      "to_floor": 3
+    },
+    {
+      "floor": 3,
+      "x": 140,
+      "y": 120,
+      "node_type": "corridor"
+    },
+    {
+      "floor": 3,
+      "x": 130,
+      "y": 100,
+      "node_type": "corridor"
+    },
+    {
+      "floor": 3,
+      "x": 120,
+      "y": 80,
+      "node_type": "corridor"
+    },
+    {
+      "floor": 3,
+      "x": 120,
+      "y": 60,
+      "node_type": "corridor"
+    },
+    {
+      "floor": 3,
+      "x": 120,
+      "y": 220,
+      "node_type": "goal",
+      "room": "307호"
+    }
+  ],
+  "metadata": {
+    "generated_at": "2025-01-02T14:30:00Z",
+    "ai_model": "PathPlannerV2",
+    "coordinate_system": "pixel",
+    "notes": [
+      "x, y는 픽셀 좌표",
+      "실제 사용 시 3.8 곱해서 cm로 변환",
+      "계단에서 층 이동 대기 시간 5초 고려"
+    ]
+  }
+}
