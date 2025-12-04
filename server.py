@@ -45,11 +45,15 @@ FLOOR_IMG = {
     3: "static/s4_1_nor-3.png"
 }
 
-OVERLAY_DIR = Path("static/overlays")
-OVERLAY_DIR.mkdir(exist_ok=True)
+BASE_DIR = Path(__file__).parent
 
-OUTPUT_DIR = Path("outputs")
-OUTPUT_DIR.mkdir(exist_ok=True)
+# overlay 저장 폴더
+OVERLAY_DIR = BASE_DIR / "static" / "overlays"
+OVERLAY_DIR.mkdir(parents=True, exist_ok=True)
+
+# JSON 결과 저장 폴더
+OUTPUT_DIR = BASE_DIR / "outputs"
+OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 class Req(BaseModel):
     start_room: int
@@ -66,8 +70,12 @@ def draw_overlay(floor, path):
         if i>0:
             px,py = path[i-1]
             cv2.line(img,(px,py),(x,y),(0,0,255),2)
-    name = f"overlay_{floor}_{uuid.uuid4().hex}.png"
-    cv2.imwrite(str(OVERLAY_DIR/name),img)
+
+    # ★ UUID 제거하여 파일명 고정
+    name = f"overlay_{floor}.png"
+
+    cv2.imwrite(str(OVERLAY_DIR / name), img)
+
     return f"/static/overlays/{name}"
 
 

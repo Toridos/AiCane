@@ -118,7 +118,31 @@ export default function RoutePlanner(){
             ) : routeData ? (
               // show first overlay image if available, otherwise show floor background image
               routeData.overlay && routeData.overlay.length>0 ? (
-                <img ref={imgRef} onClick={onImageClick} src={displayedOverlay || floorImage(currentFloor)} style={{maxWidth:'100%',maxHeight:'100%',cursor: clickMode? 'crosshair':'default'}} alt="overlay" />
+                <img
+                  ref={imgRef}
+                  onClick={onImageClick}
+                  src={displayedOverlay || floorImage(currentFloor)}
+                  crossOrigin="anonymous"
+                  onError={(e)=>{
+                    const img = e.currentTarget as HTMLImageElement
+                    console.warn('Overlay image failed to load:', img.src)
+                    try{
+                      // 시도1: backendBase가 설정되어 있으면 원래 URL의 path를 가져와서 재시도
+                      if(backendBase && img.src.startsWith('http')){
+                        const p = new URL(img.src).pathname
+                        img.src = backendBase + p
+                        console.info('Retrying overlay using backendBase + pathname:', img.src)
+                        return
+                      }
+                    }catch(err){
+                      // 무시하고 폴백으로 이동
+                    }
+                    // 최종 폴백: 바닥 이미지로 대체
+                    img.src = floorImage(currentFloor)
+                  }}
+                  style={{maxWidth:'100%',maxHeight:'100%',cursor: clickMode? 'crosshair':'default'}}
+                  alt="overlay"
+                />
               ) : (
                 <img ref={imgRef} onClick={onImageClick} src={floorImage(currentFloor)} style={{maxWidth:'100%',maxHeight:'100%',cursor: clickMode? 'crosshair':'default'}} alt={`floor ${currentFloor}`} />
               )
