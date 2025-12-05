@@ -46,20 +46,30 @@ export default function RoutePlanner(){
 
   const imgRef = useRef<HTMLImageElement | null>(null)
 
-  const overlayUrls = (routeData && routeData.overlay)
-  ? (routeData.overlay as string[]).map((raw) => {
-      if (typeof raw !== 'string') return raw
+  const overlayUrls =
+  routeData && routeData.overlay
+    ? (routeData.overlay as string[]).map((raw) => {
+        if (typeof raw !== 'string') return raw
 
-      // 앞뒤 공백/줄바꿈 제거
-      const u = raw.trim()
+        // 앞뒤 공백/줄바꿈 제거
+        const u = raw.trim()
 
-      // "/static/..." 같은 상대경로면 백엔드 베이스를 붙임
-      if (u.startsWith('/')) return (backendBase || '') + u
+        // "/static/..." 같은 상대경로면 백엔드 베이스를 붙임
+        if (u.startsWith('/')) {
+          let base = backendBase || ''
 
-      // 이미 "https://..." 같은 절대경로면 그대로 사용
-      return u
-    })
-  : []
+          // ✅ 개선안 1: http:// 로 시작하면 https:// 로 강제 변환
+          if (base.startsWith('http://')) {
+            base = base.replace(/^http:\/\//, 'https://')
+          }
+
+          return base + u
+        }
+
+        // 이미 "https://..." 같은 절대경로면 그대로 사용
+        return u
+      })
+    : []
 
   // try to detect which overlay corresponds to which floor by parsing filenames
   const overlayMeta: Array<{url:string,floor:number|null}> = overlayUrls.map(u=>{
