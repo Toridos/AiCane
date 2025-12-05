@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { generatePath, generatePathFromCoords } from '../services/api'
 
 export default function RoutePlanner(){
@@ -9,33 +9,11 @@ export default function RoutePlanner(){
   const [routeData,setRouteData]=useState<any|null>(null)
   const [error,setError]=useState<string|undefined>()
 
-  const handleGenerate=async()=>{
-    if(!startRoom || !endRoom) return
-    setLoading(true)
-    setError(undefined)
-    setRouteData(null)
-    try{
-      const start = parseInt(startRoom,10)
-      const end = parseInt(endRoom,10)
-      const res = await generatePath({start_room:start, goal_room:end})
-      if(!res.success) {
-        setError('경로를 찾을 수 없습니다')
-      } else {
-        setRouteData(res)
-      }
-    }catch(err:any){
-      setError(err.message||String(err))
-    }finally{
-      setLoading(false)
-    }
-  }
-
-  // ----------------------------------------------------------------
-  // [설정 1] 백엔드 주소 (본인 Ngrok 주소 확인 필수!)
-  // ----------------------------------------------------------------
+  // -----------------------------------------------------------
+  // [설정 1] 백엔드 주소 (Ngrok)
+  // -----------------------------------------------------------
   const backendBase = "https://unhappi-shon-unmellifluously.ngrok-free.dev"; 
 
-  // 배경 이미지
   const floorImage = (floor: number) => `static/s4_1_nor-${floor}.png`
 
   const [clickMode, setClickMode] = useState(false)
@@ -43,21 +21,15 @@ export default function RoutePlanner(){
   const [endCoord, setEndCoord] = useState<{ floor: number; x: number; y: number } | null>(null)
   const imgRef = useRef<HTMLImageElement | null>(null)
 
-  // ----------------------------------------------------------------
-  // [설정 2] 주소 정리 및 HTTPS 강제 변환
-  // ----------------------------------------------------------------
+  // -----------------------------------------------------------
+  // [설정 2] 이미지 URL 정리 (HTTPS 강제)
+  // -----------------------------------------------------------
   const overlayUrls = (routeData && routeData.overlay)
   ? (routeData.overlay as string[]).map((raw) => {
       if (typeof raw !== 'string') return raw
       let u = raw.trim()
-
-      if (u.startsWith('/')) {
-          return backendBase + u
-      }
-      
-      if (u.startsWith('http://')) {
-          return u.replace('http://', 'https://')
-      }
+      if (u.startsWith('/')) return backendBase + u
+      if (u.startsWith('http://')) return u.replace('http://', 'https://')
       return u
     })
   : []
@@ -69,7 +41,48 @@ export default function RoutePlanner(){
     }catch(e){ return {url:u,floor:null} }
   })
 
-  const displayedOverlay = overlayMeta.find(m=>m.floor===currentFloor)?.url || overlayUrls[0] || null
+  // 원본 오버레이 URL
+  const displayedOverlayUrl = overlayMeta.find(m=>m.floor===currentFloor)?.url || overlayUrls[0] || null
+
+  // -----------------------------------------------------------
+  // [핵심 해결책] Ngrok 경고 우회용 이미지 로더
+  // 일반 <img> 태그 대신 fetch로 데이터를 받아옵니다.
+  // -----------------------------------------------------------
+  const [secureOverlayBlob, setSecureOverlayBlob] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!displayedOverlayUrl) {
+      setSecureOverlayBlob(null);
+      return;
+    }
+
+    // 로컬 이미지나 data URL이면 그냥 보여줌
+    if (!displayedOverlayUrl.startsWith('http')) {
+        setSecureOverlayBlob(displayedOverlayUrl);
+        return;
+    }
+
+    // Ngrok URL이면 헤더를 추가해서 fetch
+    const fetchImage = async () => {
+      try {
+        const response = await fetch(displayedOverlayUrl, {
+          headers: new Headers({
+            // ★ 이 헤더가 있어야 Ngrok 경고창이 안 뜹니다! ★
+            "ngrok-skip-browser-warning": "69420", 
+          }),
+        });
+        const blob = await response.blob();
+        const objectUrl = URL.createObjectURL(blob);
+        setSecureOverlayBlob(objectUrl);
+      } catch (err) {
+        console.error("Failed to load secure image", err);
+        setSecureOverlayBlob(null);
+      }
+    };
+
+    fetchImage();
+  }, [displayedOverlayUrl]); // URL이 바뀔 때마다 실행
+
 
   const onImageClick = (e: React.MouseEvent<HTMLImageElement>) => {
     if(!clickMode) return
@@ -90,9 +103,22 @@ export default function RoutePlanner(){
     }
   }
 
+  const handleGenerate = async()=>{
+    if(!startRoom || !endRoom) return
+    setLoading(true); setError(undefined); setRouteData(null); setSecureOverlayBlob(null);
+    try{
+      const start = parseInt(startRoom,10)
+      const end = parseInt(endRoom,10)
+      const res = await generatePath({start_room:start, goal_room:end})
+      if(!res.success) setError('경로를 찾을 수 없습니다')
+      else setRouteData(res)
+    }catch(err:any){ setError(err.message||String(err)) }
+    finally{ setLoading(false) }
+  }
+
   const handleGenerateFromCoords = async ()=>{
     if(!startCoord || !endCoord){ setError('출발지/도착지를 먼저 지정하세요'); return }
-    setLoading(true); setError(undefined); setRouteData(null)
+    setLoading(true); setError(undefined); setRouteData(null); setSecureOverlayBlob(null);
     try{
       const res = await generatePathFromCoords({ start: startCoord, goal: endCoord })
       if(!res.success) setError('경로를 찾을 수 없습니다')
@@ -125,13 +151,10 @@ export default function RoutePlanner(){
                         alt={`floor ${currentFloor}`} 
                     />
                     
-                    {/* [설정 3] 오버레이 이미지 태그 수정 (핵심!)
-                        - crossOrigin 제거: 불필요한 보안 검사 생략
-                        - referrerPolicy="no-referrer" 추가: "나 Vercel에서 왔어"라는 꼬리표 떼기
-                    */}
-                    {displayedOverlay && (
+                    {/* 2. 오버레이 (보안 패치된 Blob 이미지 사용) */}
+                    {secureOverlayBlob && (
                         <img 
-                            src={displayedOverlay}
+                            src={secureOverlayBlob}
                             style={{
                                 position: 'absolute', 
                                 top: 0, 
@@ -141,9 +164,6 @@ export default function RoutePlanner(){
                                 pointerEvents: 'none'
                             }} 
                             alt="route overlay"
-                            // ★ 여기가 핵심입니다! ★
-                            referrerPolicy="no-referrer"
-                            onError={(e) => console.error("Overlay failed:", e.currentTarget.src)}
                         />
                     )}
                 </div>
@@ -180,15 +200,6 @@ export default function RoutePlanner(){
           </div>
 
           {error && <div style={{color:'crimson',marginTop:8}}>{error}</div>}
-
-          {routeData && (
-            <div className="route-info">
-              <div>오버레이 주소:</div>
-              <div style={{fontSize:'0.7em', color:'#888', wordBreak:'break-all'}}>
-                 {overlayUrls.length > 0 ? overlayUrls[0] : '없음'}
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </section>
