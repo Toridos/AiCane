@@ -132,7 +132,6 @@ export default function RoutePlanner(){
                   ref={imgRef}
                   onClick={onImageClick}
                   src={displayedOverlay || floorImage(currentFloor)}
-                  crossOrigin="anonymous"
                   onError={(e)=>{
                     const img = e.currentTarget as HTMLImageElement
                     console.warn('Overlay image failed to load:', img.src)
