@@ -1,0 +1,65 @@
+{
+  "description": "1층 평면도 (118.4m x 26.25m)",
+  "scale": {
+    "pixel_to_cm": 3.8,
+    "description": "1픽셀 = 3.8cm"
+  },
+  "building": {
+    "width_cm": 11840,
+    "height_cm": 2625
+  },
+  "corridors": [
+    {
+      "id": "main_horizontal",
+      "name": "중앙 메인 복도",
+      "type": "horizontal",
+      "x_min": 0,
+      "x_max": 11840,
+      "y_center": 1312.5,
+      "y_min": 1192.5,
+      "y_max": 1432.5,
+      "width": 240
+    },
+    {
+      "id": "vertical_west",
+      "name": "서쪽 세로 복도",
+      "type": "vertical",
+      "y_min": 0,
+      "y_max": 1312.5,
+      "x_center": 380,
+      "x_min": 260,
+      "x_max": 500,
+      "width": 240
+    },
+    {
+      "id": "central_lobby",
+      "name": "중앙 로비",
+      "type": "open_space",
+      "x_min": 5700,
+      "x_max": 7200,
+      "y_min": 1000,
+      "y_max": 1625,
+      "use_ultrasonic": false
+    }
+  ],
+  "rooms": {
+    "101호": {"door_x": 380, "door_y": 1192.5, "direction": "south"},
+    "102호": {"door_x": 1140, "door_y": 1192.5, "direction": "south"},
+    "103호": {"door_x": 1900, "door_y": 1192.5, "direction": "south"},
+    "104호": {"door_x": 7600, "door_y": 1192.5, "direction": "south"},
+    "105호": {"door_x": 9120, "door_y": 1192.5, "direction": "south"},
+    "106호": {"door_x": 10640, "door_y": 1192.5, "direction": "south"},
+    "117호": {"door_x": 380, "door_y": 1432.5, "direction": "north"},
+    "116호": {"door_x": 760, "door_y": 1432.5, "direction": "north"},
+    "115호": {"door_x": 1520, "door_y": 1432.5, "direction": "north"},
+    "114호": {"door_x": 2280, "door_y": 1432.5, "direction": "north"},
+    "113호": {"door_x": 3040, "door_y": 1432.5, "direction": "north"},
+    "118호": {"door_x": 3800, "door_y": 1432.5, "direction": "north"},
+    "112호": {"door_x": 7600, "door_y": 1432.5, "direction": "north"},
+    "111호": {"door_x": 8360, "door_y": 1432.5, "direction": "north"},
+    "110호": {"door_x": 9120, "door_y": 1432.5, "direction": "north"},
+    "109호": {"door_x": 9880, "door_y": 1432.5, "direction": "north"},
+    "108호": {"door_x": 10640, "door_y": 1432.5, "direction": "north"},
+    "107호": {"door_x": 11460, "door_y": 1432.5, "direction": "north"}
+  }
+}

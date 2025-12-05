@@ -1,0 +1,14 @@
+{
+  "description": "AI가 생성한 경로 예시 (픽셀 단위)",
+  "scale": "1픽셀 = 3.8cm",
+  "waypoints": [
+    {"x": 100, "y": 314, "description": "101호 출발"},
+    {"x": 200, "y": 314, "description": "복도 진입"},
+    {"x": 400, "y": 314, "description": "복도 주행"},
+    {"x": 600, "y": 314, "description": "로비 방향"},
+    {"x": 800, "y": 314, "description": "로비 통과"},
+    {"x": 1000, "y": 314, "description": "복도 재진입"},
+    {"x": 1200, "y": 314, "description": "107호 근처"},
+    {"x": 1300, "y": 377, "description": "107호 문 앞"}
+  ]
+}

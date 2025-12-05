@@ -1,0 +1,15 @@
+# 속도 캘리브레이션 데이터
+# 실측 기반 (단위: m/s, rad/s)
+
+8:
+  forward: 0.054   # m/s
+  rotate: 0.536    # rad/s
+  lateral: 0.049   # m/s
+
+14:
+  forward: 0.0947  # m/s
+  rotate: 0.94     # rad/s
+  lateral: 0.085   # m/s
+
+# 캘리브레이션 방법:
+# python scripts/calibrate.py

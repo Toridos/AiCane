@@ -1,0 +1,123 @@
+# 하드웨어 설정 (팀원 검증 + 현재 기능 통합)
+
+# ============================================
+# 로봇 설정
+# ============================================
+robot:
+  # 시리얼 포트
+  # - /dev/rfcomm0: 블루투스 (팀원 검증!) ✅
+  # - /dev/ttyUSB0 or /dev/ttyUSB1: USB 시리얼
+  # - null: 자동 탐색
+  port: '/dev/rfcomm0'             # ✅ 팀원 검증된 값!
+  
+  # 블루투스 MAC 주소 (실제 MAC 주소로 변경!)
+  # 찾는 방법: sudo hcitool scan
+  bluetooth_mac: '98:D3:31:XX:XX:XX'
+  
+  # 자동 연결 시도 여부
+  # true: port가 없으면 자동으로 bluetooth_mac 연결 시도
+  # false: port만 사용
+  auto_connect: true
+  
+  # 통신 설정
+  baudrate: 9600                   # ✅ HC-05 기본 (팀원 확인)
+  timeout: 1.0
+
+# ============================================
+# LiDAR 설정 (360도 장애물 감지)
+# ============================================
+lidar:
+  # LiDAR 사용 여부
+  enabled: true                    # ✅ 팀원 검증!
+  
+  # USB 포트
+  # ⚠️ 실제 연결 확인 필요!
+  # - 팀원 테스트: /dev/ttyUSB1
+  # - 현재 예상: /dev/ttyUSB0
+  # 확인: ls /dev/ttyUSB*
+  port: /dev/ttyUSB1               # ✅ 팀원 검증된 값!
+  
+  # LiDAR 모델
+  # - rplidar_a1: 115200 baud
+  # - rplidar_a2: 115200 baud
+  # - rplidar_x4: 256000 baud
+  # ⚠️ 팀원 테스트: 115200 → A1 or A2 모델!
+  model: rplidar_a2                # ✅ 팀원 baudrate 기준
+  
+  # 통신 속도
+  # ⚠️ 팀원: 115200 (A1/A2 모델)
+  # ⚠️ 현재: 256000 (X4 모델)
+  baudrate: 115200                 # ✅ 팀원 검증된 값!
+  
+  # 스캔 속도 (Hz)
+  scan_rate: 10                    # 10Hz (CPU 절약)
+  
+  # Mock 모드 (LiDAR 없이 테스트)
+  mock: false                      # 실제 LiDAR 사용
+
+# ============================================
+# 초음파 센서 설정
+# ============================================
+ultrasonic:
+  # 핀 번호 ✅ 팀원 검증!
+  pins:
+    front: 12
+    left: 2
+    right: 3
+  
+  # 거리 임계값 (cm) ✅ 팀원 검증!
+  critical_distance: 25           # 긴급 정지
+  warning_distance: 50            # 감속
+  safe_distance: 100              # 안전
+
+# ============================================
+# 속도 설정
+# ============================================
+speed:
+  # 속도 레벨 ✅ 팀원 검증!
+  min_level: 6
+  max_level: 15
+  default_level: 10
+
+# ============================================
+# 사용 가이드
+# ============================================
+# 
+# 🔌 로봇 연결 (블루투스):
+# 1. MAC 주소 찾기: sudo hcitool scan
+# 2. 위 bluetooth_mac에 입력
+# 3. 페어링: bluetoothctl
+#    > pair 98:D3:31:XX:XX:XX
+#    > trust 98:D3:31:XX:XX:XX
+# 4. 수동 바인딩: sudo rfcomm bind 0 98:D3:31:XX:XX:XX 1
+# 5. 권한: sudo chmod 666 /dev/rfcomm0
+# 6. ✅ port: '/dev/rfcomm0' (팀원 검증!)
+#
+# 📡 LiDAR 연결 (USB):
+# 1. USB로 라즈베리파이에 연결
+# 2. 포트 확인: ls /dev/ttyUSB*
+#    - /dev/ttyUSB0 또는 /dev/ttyUSB1
+#    - ✅ 팀원 테스트: /dev/ttyUSB1
+# 3. 권한: sudo chmod 666 /dev/ttyUSB1
+# 4. 라이브러리: pip install rplidar-roboticia --break-system-packages
+# 5. ✅ baudrate: 115200 (팀원 검증 → A1/A2 모델)
+#
+# 🧪 테스트:
+# python scripts/test_hardware.py
+# python scripts/test_lidar.py
+#
+# 📚 자세한 내용:
+# - BLUETOOTH_GUIDE.md
+# - LIDAR_GUIDE.md
+
+# ============================================
+# 팀원 검증 요약
+# ============================================
+# ✅ robot.port: /dev/rfcomm0
+# ✅ robot.baudrate: 9600
+# ✅ lidar.port: /dev/ttyUSB1
+# ✅ lidar.baudrate: 115200 (A1/A2 모델)
+# ✅ lidar.enabled: True
+# ✅ ultrasonic.pins: front=12, left=2, right=3
+# ✅ ultrasonic thresholds: 25/50/100
+# ✅ speed levels: 6/15/10

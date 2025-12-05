@@ -1,0 +1,142 @@
+{
+  "building": {
+    "name": "3층 건물",
+    "total_floors": 3,
+    "pixel_to_cm": 3.8
+  },
+  
+  "floors": {
+    "1": {
+      "corridors": {
+        "main_horizontal": {
+          "type": "horizontal",
+          "corners_pixel": [
+            [219.745, 219.821],
+            [2390.746, 2390.813]
+          ],
+          "y_center_pixel": 219.783,
+          "width_cm": 240
+        },
+        "central_lobby": {
+          "type": "open_space",
+          "corners_pixel": [
+            [1225.746, 1241.884],
+            [1463.762, 1463.521]
+          ]
+        },
+        "vertical_corridor": {
+          "type": "vertical",
+          "corners_pixel": [
+            [1225.746, 1241.884],
+            [1225.746, 219.821]
+          ],
+          "width_cm": 240
+        }
+      },
+      "rooms": {
+        "101호": {
+          "x_pixel": 120,
+          "y_pixel": 41,
+          "door_direction": "south"
+        },
+        "102호": {
+          "x_pixel": 200,
+          "y_pixel": 41,
+          "door_direction": "south"
+        },
+        "103호": {
+          "x_pixel": 280,
+          "y_pixel": 41,
+          "door_direction": "south"
+        },
+        "104호": {
+          "x_pixel": 360,
+          "y_pixel": 41,
+          "door_direction": "south"
+        },
+        "105호": {
+          "x_pixel": 440,
+          "y_pixel": 41,
+          "door_direction": "south"
+        },
+        "106호": {
+          "x_pixel": 520,
+          "y_pixel": 41,
+          "door_direction": "south"
+        },
+        "107호": {
+          "x_pixel": 120,
+          "y_pixel": 220,
+          "door_direction": "north"
+        },
+        "108호": {
+          "x_pixel": 200,
+          "y_pixel": 220,
+          "door_direction": "north"
+        },
+        "109호": {
+          "x_pixel": 280,
+          "y_pixel": 220,
+          "door_direction": "north"
+        },
+        "110호": {
+          "x_pixel": 360,
+          "y_pixel": 220,
+          "door_direction": "north"
+        },
+        "111호": {
+          "x_pixel": 440,
+          "y_pixel": 220,
+          "door_direction": "north"
+        },
+        "112호": {
+          "x_pixel": 520,
+          "y_pixel": 220,
+          "door_direction": "north"
+        }
+      }
+    },
+    
+    "2": {
+      "note": "2층은 1층과 골격 동일, 방 번호만 201~212",
+      "corridors": "same_as_floor_1",
+      "rooms": {
+        "201호": {"x_pixel": 120, "y_pixel": 41, "door_direction": "south"},
+        "202호": {"x_pixel": 200, "y_pixel": 41, "door_direction": "south"},
+        "207호": {"x_pixel": 120, "y_pixel": 220, "door_direction": "north"}
+      }
+    },
+    
+    "3": {
+      "note": "3층은 1층과 골격 동일, 방 번호만 301~312",
+      "corridors": "same_as_floor_1",
+      "rooms": {
+        "301호": {"x_pixel": 120, "y_pixel": 41, "door_direction": "south"},
+        "302호": {"x_pixel": 200, "y_pixel": 41, "door_direction": "south"},
+        "307호": {"x_pixel": 120, "y_pixel": 220, "door_direction": "north"}
+      }
+    }
+  },
+  
+  "stairs": [
+    {
+      "id": "stair_west",
+      "name": "서쪽 계단",
+      "floors": [1, 2, 3],
+      "position_pixel": [1317.892, 1241.884],
+      "type": "up_down",
+      "width_cm": 150
+    }
+  ],
+  
+  "metadata": {
+    "created": "2025-01-02",
+    "version": "1.0",
+    "source": "실측 평면도",
+    "notes": [
+      "픽셀 좌표는 평면도 이미지 기준",
+      "1픽셀 = 3.8cm",
+      "2층, 3층은 1층과 골격 동일"
+    ]
+  }
+}
