@@ -30,48 +30,43 @@ export default function RoutePlanner(){
     }
   }
 
-  // Backend API base (for overlay images from 서버)
-  const backendBase =
-    (import.meta as any).env?.VITE_API_BASE ||
-    ((import.meta as any).env?.DEV ? 'http://localhost:8000' : '')
+  // ----------------------------------------------------------------
+  // [설정 1] 백엔드 주소 하드코딩 (환경변수 문제 원천 차단)
+  // ★ 본인의 Ngrok 주소가 맞는지 확인하세요!
+  // ----------------------------------------------------------------
+  const backendBase = "https://unhappi-shon-unmellifluously.ngrok-free.dev"; 
 
-  // Floor images are served from the frontend의 public 디렉터리 (/public/static/...)
-  // 예: public/static/s4_1_nor-1.png, s4_1_nor-2.png ...
-  const floorImage = (floor: number) => `/static/s4_1_nor-${floor}.png`
+  // 배경 이미지 파일명
+  const floorImage = (floor: number) => `static/s4_1_nor-${floor}.png`
 
-  // click mode: allow user to click image to set start/end coordinates
   const [clickMode, setClickMode] = useState(false)
   const [startCoord, setStartCoord] = useState<{ floor: number; x: number; y: number } | null>(null)
   const [endCoord, setEndCoord] = useState<{ floor: number; x: number; y: number } | null>(null)
-
   const imgRef = useRef<HTMLImageElement | null>(null)
 
-  const overlayUrls =
-  routeData && routeData.overlay
-    ? (routeData.overlay as string[]).map((raw) => {
-        if (typeof raw !== 'string') return raw
+  // ----------------------------------------------------------------
+  // [설정 2] 오버레이 이미지 주소 생성 (HTTPS 강제 변환)
+  // ----------------------------------------------------------------
+  const overlayUrls = (routeData && routeData.overlay)
+  ? (routeData.overlay as string[]).map((raw) => {
+      if (typeof raw !== 'string') return raw
+      let u = raw.trim()
 
-        // 앞뒤 공백/줄바꿈 제거
-        const u = raw.trim()
+      // 1) "/static/..." 처럼 상대경로면 -> 백엔드 주소(HTTPS) 붙이기
+      if (u.startsWith('/')) {
+          return backendBase + u
+      }
+      
+      // 2) "http://" 로 시작하면 -> "무조건 https://"로 강제 치환
+      // (이게 있어야 Vercel에서 차단 안 당함!)
+      if (u.startsWith('http://')) {
+          return u.replace('http://', 'https://')
+      }
+      return u
+    })
+  : []
 
-        // "/static/..." 같은 상대경로면 백엔드 베이스를 붙임
-        if (u.startsWith('/')) {
-          let base = backendBase || ''
-
-          // ✅ 개선안 1: http:// 로 시작하면 https:// 로 강제 변환
-          if (base.startsWith('http://')) {
-            base = base.replace(/^http:\/\//, 'https://')
-          }
-
-          return base + u
-        }
-
-        // 이미 "https://..." 같은 절대경로면 그대로 사용
-        return u
-      })
-    : []
-
-  // try to detect which overlay corresponds to which floor by parsing filenames
+  // 층수 파싱
   const overlayMeta: Array<{url:string,floor:number|null}> = overlayUrls.map(u=>{
     try{
       const m = u.match(/overlay_(\d+)_/)
@@ -79,7 +74,6 @@ export default function RoutePlanner(){
     }catch(e){ return {url:u,floor:null} }
   })
 
-  // choose overlay matching current floor when possible
   const displayedOverlay = overlayMeta.find(m=>m.floor===currentFloor)?.url || overlayUrls[0] || null
 
   const onImageClick = (e: React.MouseEvent<HTMLImageElement>) => {
@@ -96,7 +90,6 @@ export default function RoutePlanner(){
     } else if(!endCoord){
       setEndCoord({floor:f,x,y})
     } else {
-      // both set -> reset start to new click
       setStartCoord({floor:f,x,y})
       setEndCoord(null)
     }
@@ -120,35 +113,48 @@ export default function RoutePlanner(){
           <div className="floor-controls">
             <button onClick={()=>setCurrentFloor(f=>Math.max(1,f-1))} disabled={currentFloor===1}>Prev</button>
             <div className="floor-indicator">{currentFloor}층</div>
-            <button onClick={()=>setCurrentFloor(f=>f+1)} disabled={currentFloor===10}>Next</button>
+            <button onClick={()=>setCurrentFloor(f=>Math.min(3,f+1))} disabled={currentFloor===3}>Next</button>
           </div>
-          <div className="floor-visual" style={{position:'relative'}}>
+          
+          <div className="floor-visual" style={{position:'relative', border:'1px solid #ddd'}}>
             {loading ? (
-              <div className="placeholder">경로 생성 중...</div>
-            ) : routeData ? (
-              // show first overlay image if available, otherwise show floor background image
-              routeData.overlay && routeData.overlay.length>0 ? (
-               <img
-                ref={imgRef}
-                onClick={onImageClick}
-                src={displayedOverlay || floorImage(currentFloor)}
-                onError={(e) => {
-                  const img = e.currentTarget as HTMLImageElement
-                  console.warn('Overlay image failed to load, fallback to floor image:', img.src)
-                  img.src = floorImage(currentFloor)
-                }}
-                style={{ maxWidth:'100%', maxHeight:'100%', cursor: clickMode ? 'crosshair' : 'default' }}
-                alt="overlay"
-              />
-              ) : (
-                <img ref={imgRef} onClick={onImageClick} src={floorImage(currentFloor)} style={{maxWidth:'100%',maxHeight:'100%',cursor: clickMode? 'crosshair':'default'}} alt={`floor ${currentFloor}`} />
-              )
+              <div className="placeholder" style={{padding:'20px', textAlign:'center'}}>경로 생성 중...</div>
             ) : (
-              // no route yet: show the static floor image for the selected floor
-              <img ref={imgRef} onClick={onImageClick} src={floorImage(currentFloor)} style={{maxWidth:'100%',maxHeight:'100%',cursor: clickMode? 'crosshair':'default'}} alt={`floor ${currentFloor}`} />
+                // ----------------------------------------------------------------
+                // [설정 3] 겹쳐 그리기 (Layering)
+                // ----------------------------------------------------------------
+                <div style={{position:'relative', width:'100%', height:'100%'}}>
+                    {/* 1. 배경 지도 (항상 표시) */}
+                    <img 
+                        ref={imgRef} 
+                        onClick={onImageClick} 
+                        src={floorImage(currentFloor)} 
+                        style={{width:'100%', display:'block', cursor: clickMode? 'crosshair':'default'}} 
+                        alt={`floor ${currentFloor}`} 
+                    />
+                    
+                    {/* 2. 오버레이 (경로 데이터가 있을 때만 위에 표시) */}
+                    {displayedOverlay && (
+                        <img 
+                            src={displayedOverlay}
+                            style={{
+                                position: 'absolute', 
+                                top: 0, 
+                                left: 0, 
+                                width: '100%', 
+                                height: '100%', 
+                                pointerEvents: 'none'
+                            }} 
+                            alt="route overlay"
+                            crossOrigin="anonymous"
+                            // 에러가 나도 배경 지도로 바꾸지 않고 그냥 콘솔에만 찍음
+                            onError={(e) => console.error("Overlay failed:", e.currentTarget.src)}
+                        />
+                    )}
+                </div>
             )}
 
-            {/* markers for clicked coords on the currently visible floor */}
+            {/* 좌표 마커 */}
             {imgRef.current && imgRef.current.naturalWidth > 0 && startCoord && startCoord.floor===currentFloor && (
               <div className="marker start" style={{left: `${(startCoord.x / imgRef.current!.naturalWidth)*100}%`, top: `${(startCoord.y / imgRef.current!.naturalHeight)*100}%`}} />
             )}
@@ -161,7 +167,6 @@ export default function RoutePlanner(){
         <div className="form-card">
           <label>출발 호수</label>
           <input value={startRoom} onChange={e=>setStartRoom(e.target.value)} placeholder="예: 101" />
-
           <label>도착 호수</label>
           <input value={endRoom} onChange={e=>setEndRoom(e.target.value)} placeholder="예: 307" />
 
@@ -172,8 +177,8 @@ export default function RoutePlanner(){
 
           <div style={{marginTop:8}}>
             <div><strong>클릭 선택 좌표</strong></div>
-            <div>출발: {startCoord ? `${startCoord.floor} / ${startCoord.x}, ${startCoord.y}` : '-'}</div>
-            <div>도착: {endCoord ? `${endCoord.floor} / ${endCoord.x}, ${endCoord.y}` : '-'}</div>
+            <div>출발: {startCoord ? `${startCoord.floor}층 (${startCoord.x}, ${startCoord.y})` : '-'}</div>
+            <div>도착: {endCoord ? `${endCoord.floor}층 (${endCoord.x}, ${endCoord.y})` : '-'}</div>
             <div style={{marginTop:6}}>
               <button className="generate" onClick={handleGenerateFromCoords} disabled={!startCoord || !endCoord || loading}>경로 생성 (좌표)</button>
             </div>
@@ -183,8 +188,10 @@ export default function RoutePlanner(){
 
           {routeData && (
             <div className="route-info">
-              <div>경로 포인트: {routeData.path ? routeData.path.length : 0}</div>
-              <div>오버레이 이미지: {overlayUrls.length? overlayUrls.join(', ') : '없음'}</div>
+               {/* 디버깅용: 실제 적용된 주소 확인 */}
+              <div style={{fontSize:'0.7em', color:'#888', wordBreak:'break-all'}}>
+                 {overlayUrls.length > 0 ? overlayUrls[0] : ''}
+              </div>
             </div>
           )}
         </div>
