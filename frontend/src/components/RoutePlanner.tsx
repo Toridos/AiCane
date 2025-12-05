@@ -31,12 +31,11 @@ export default function RoutePlanner(){
   }
 
   // ----------------------------------------------------------------
-  // [설정 1] 백엔드 주소 하드코딩 (환경변수 문제 원천 차단)
-  // ★ 본인의 Ngrok 주소가 맞는지 확인하세요!
+  // [설정 1] 백엔드 주소 (본인 Ngrok 주소 확인 필수!)
   // ----------------------------------------------------------------
   const backendBase = "https://unhappi-shon-unmellifluously.ngrok-free.dev"; 
 
-  // 배경 이미지 파일명
+  // 배경 이미지
   const floorImage = (floor: number) => `static/s4_1_nor-${floor}.png`
 
   const [clickMode, setClickMode] = useState(false)
@@ -45,20 +44,17 @@ export default function RoutePlanner(){
   const imgRef = useRef<HTMLImageElement | null>(null)
 
   // ----------------------------------------------------------------
-  // [설정 2] 오버레이 이미지 주소 생성 (HTTPS 강제 변환)
+  // [설정 2] 주소 정리 및 HTTPS 강제 변환
   // ----------------------------------------------------------------
   const overlayUrls = (routeData && routeData.overlay)
   ? (routeData.overlay as string[]).map((raw) => {
       if (typeof raw !== 'string') return raw
       let u = raw.trim()
 
-      // 1) "/static/..." 처럼 상대경로면 -> 백엔드 주소(HTTPS) 붙이기
       if (u.startsWith('/')) {
           return backendBase + u
       }
       
-      // 2) "http://" 로 시작하면 -> "무조건 https://"로 강제 치환
-      // (이게 있어야 Vercel에서 차단 안 당함!)
       if (u.startsWith('http://')) {
           return u.replace('http://', 'https://')
       }
@@ -66,7 +62,6 @@ export default function RoutePlanner(){
     })
   : []
 
-  // 층수 파싱
   const overlayMeta: Array<{url:string,floor:number|null}> = overlayUrls.map(u=>{
     try{
       const m = u.match(/overlay_(\d+)_/)
@@ -120,11 +115,8 @@ export default function RoutePlanner(){
             {loading ? (
               <div className="placeholder" style={{padding:'20px', textAlign:'center'}}>경로 생성 중...</div>
             ) : (
-                // ----------------------------------------------------------------
-                // [설정 3] 겹쳐 그리기 (Layering)
-                // ----------------------------------------------------------------
                 <div style={{position:'relative', width:'100%', height:'100%'}}>
-                    {/* 1. 배경 지도 (항상 표시) */}
+                    {/* 1. 배경 지도 */}
                     <img 
                         ref={imgRef} 
                         onClick={onImageClick} 
@@ -133,7 +125,10 @@ export default function RoutePlanner(){
                         alt={`floor ${currentFloor}`} 
                     />
                     
-                    {/* 2. 오버레이 (경로 데이터가 있을 때만 위에 표시) */}
+                    {/* [설정 3] 오버레이 이미지 태그 수정 (핵심!)
+                        - crossOrigin 제거: 불필요한 보안 검사 생략
+                        - referrerPolicy="no-referrer" 추가: "나 Vercel에서 왔어"라는 꼬리표 떼기
+                    */}
                     {displayedOverlay && (
                         <img 
                             src={displayedOverlay}
@@ -146,8 +141,8 @@ export default function RoutePlanner(){
                                 pointerEvents: 'none'
                             }} 
                             alt="route overlay"
-                            crossOrigin="anonymous"
-                            // 에러가 나도 배경 지도로 바꾸지 않고 그냥 콘솔에만 찍음
+                            // ★ 여기가 핵심입니다! ★
+                            referrerPolicy="no-referrer"
                             onError={(e) => console.error("Overlay failed:", e.currentTarget.src)}
                         />
                     )}
@@ -188,9 +183,9 @@ export default function RoutePlanner(){
 
           {routeData && (
             <div className="route-info">
-               {/* 디버깅용: 실제 적용된 주소 확인 */}
+              <div>오버레이 주소:</div>
               <div style={{fontSize:'0.7em', color:'#888', wordBreak:'break-all'}}>
-                 {overlayUrls.length > 0 ? overlayUrls[0] : ''}
+                 {overlayUrls.length > 0 ? overlayUrls[0] : '없음'}
               </div>
             </div>
           )}
