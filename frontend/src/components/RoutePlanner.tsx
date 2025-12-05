@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { generatePath, generatePathFromCoords } from '../services/api'
+import { generatePath, generatePathFromCoords, sendRouteToPi } from '../services/api'
 
 export default function RoutePlanner(){
   const [currentFloor, setCurrentFloor] = useState(1)
@@ -103,29 +103,84 @@ export default function RoutePlanner(){
     }
   }
 
-  const handleGenerate = async()=>{
-    if(!startRoom || !endRoom) return
-    setLoading(true); setError(undefined); setRouteData(null); setSecureOverlayBlob(null);
-    try{
-      const start = parseInt(startRoom,10)
-      const end = parseInt(endRoom,10)
-      const res = await generatePath({start_room:start, goal_room:end})
-      if(!res.success) setError('경로를 찾을 수 없습니다')
-      else setRouteData(res)
-    }catch(err:any){ setError(err.message||String(err)) }
-    finally{ setLoading(false) }
+const handleGenerate = async () => {
+  if (!startRoom || !endRoom) return;
+
+  setLoading(true);
+  setError(undefined);
+  setRouteData(null);
+  setSecureOverlayBlob(null);
+
+  try {
+    const start = parseInt(startRoom, 10);
+    const end = parseInt(endRoom, 10);
+
+    // 1) 백엔드에서 경로 생성
+    const res = await generatePath({ start_room: start, goal_room: end });
+
+    if (!res.success) {
+      setError("경로를 찾을 수 없습니다");
+      return;
+    }
+
+    // 2) 화면에 표시
+    setRouteData(res);
+
+    // 3) 라즈베리파이에 자동 전송
+    const piIP = "raspberrypi.local";   // 또는 "172.20.10.3"
+    const ok = await sendRouteToPi(piIP, res.path);
+
+    if (ok) {
+      alert("📤 AIcane(라즈베리파이)에 경로가 전달되었습니다!");
+    } else {
+      alert("⚠ 경로는 생성했지만 Pi 전송이 실패했습니다.");
+    }
+
+  } catch (err: any) {
+    setError(err.message || String(err));
+  } finally {
+    setLoading(false);
+  }
+};
+
+
+const handleGenerateFromCoords = async () => {
+  if (!startCoord || !endCoord) {
+    setError("좌표를 먼저 선택하세요");
+    return;
   }
 
-  const handleGenerateFromCoords = async ()=>{
-    if(!startCoord || !endCoord){ setError('출발지/도착지를 먼저 지정하세요'); return }
-    setLoading(true); setError(undefined); setRouteData(null); setSecureOverlayBlob(null);
-    try{
-      const res = await generatePathFromCoords({ start: startCoord, goal: endCoord })
-      if(!res.success) setError('경로를 찾을 수 없습니다')
-      else setRouteData(res)
-    }catch(err:any){ setError(err.message||String(err)) }
-    finally{ setLoading(false) }
+  setLoading(true);
+  setError(undefined);
+  setRouteData(null);
+  setSecureOverlayBlob(null);
+
+  try {
+    const res = await generatePathFromCoords({
+      start: startCoord,
+      goal: endCoord,
+    });
+
+    if (!res.success) {
+      setError("경로를 찾을 수 없습니다");
+      return;
+    }
+
+    setRouteData(res);
+
+    const piIP = "raspberrypi.local";
+    const ok = await sendRouteToPi(piIP, res.path);
+
+    if (ok) alert("📤 AIcane(라즈베리파이)로 경로 전달 완료!");
+    else alert("⚠ Pi 전송 실패");
+
+  } catch (err: any) {
+    setError(err.message || String(err));
+  } finally {
+    setLoading(false);
   }
+};
+
 
   return (
     <section className="route-planner container">
